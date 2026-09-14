@@ -1,0 +1,20 @@
+[Unit]
+Description=Rialo Edge Log Devnet balance guard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@SERVICE_USER@
+Group=@SERVICE_USER@
+WorkingDirectory=@REPO_ROOT@
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/etc/rialo-edge-log/edge.env
+ExecStart=@REPO_ROOT@/.venv/bin/python -m gateway.rialo_balance_guard --fee-payer ${RIALO_FEE_PAYER} --rpc-url ${RIALO_RPC_URL} --receipt-dir /var/lib/rialo-edge-log/data/receipts --cli-mode native --cli-project-dir @REPO_ROOT@
+Restart=always
+RestartSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

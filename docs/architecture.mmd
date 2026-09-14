@@ -1,12 +1,12 @@
 flowchart LR
-    ESP["NodeMCU V3<br/>signed readings"]
-    GW["Windows edge stack<br/>gateway · anchor · publisher"]
+    ESP["ESP8266 + DS18B20<br/>signed physical readings"]
+    GW["Ubuntu edge stack<br/>systemd · gateway · anchor · publisher"]
     RIALO["Rialo Devnet<br/>Venus workflow"]
     VPS["Public VPS<br/>archive API · SQLite · portal"]
     USER["Visitor's browser<br/>independent verification"]
 
     ESP -- "USB serial · JSON" --> GW
-    GW -- "device registration + digest · Rialo CLI in WSL" --> RIALO
+    GW -- "device registration + digest · native Rialo CLI" --> RIALO
     GW -- "registration + confirmed proof + heartbeat · HTTPS" --> VPS
     VPS -- "telemetry + public proof" --> USER
     USER -. "registration + proof workflows via public RPC" .-> RIALO

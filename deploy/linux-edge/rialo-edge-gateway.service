@@ -1,0 +1,21 @@
+[Unit]
+Description=Rialo Edge Log serial gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@SERVICE_USER@
+Group=@SERVICE_USER@
+SupplementaryGroups=dialout
+WorkingDirectory=@REPO_ROOT@
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/etc/rialo-edge-log/edge.env
+ExecStart=@REPO_ROOT@/.venv/bin/python -m gateway.edge_gateway listen --port ${RIALO_SERIAL_PORT} --data-dir /var/lib/rialo-edge-log/data --registry /var/lib/rialo-edge-log/data/device_registry.json --stale-seconds 120
+Restart=always
+RestartSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

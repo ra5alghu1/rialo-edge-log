@@ -45,6 +45,7 @@ from gateway.rialo_anchor import (
     RialoAnchorError,
     batch_receipt_exists,
     build_wsl_invocation,
+    build_native_invocation,
     extract_transaction_signature,
     load_pending_submission,
     pending_receipt_path,
@@ -350,6 +351,18 @@ class RialoArgumentTests(unittest.TestCase):
             "rialo client program --url http://172.20.0.1:44100 invoke",
             command,
         )
+
+    def test_native_linux_invocation_does_not_use_wsl(self) -> None:
+        command = build_native_invocation(
+            self.batch,
+            "GVJpRi8SVURsjKbLC84Azk24vV2cK3ib74aXRk5hdatF",
+            "/opt/rialo-edge-log",
+            rpc_url="http://127.0.0.1:44100",
+        )
+        self.assertEqual(command[:2], ["bash", "-lc"])
+        self.assertNotIn("wsl.exe", command)
+        self.assertIn("cd -- /opt/rialo-edge-log", command[2])
+        self.assertIn("--url http://127.0.0.1:44100", command[2])
 
 
 class RialoHistoricalVerificationTests(unittest.TestCase):

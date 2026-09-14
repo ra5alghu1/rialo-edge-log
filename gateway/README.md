@@ -4,6 +4,14 @@ The gateway reads newline-delimited JSON telemetry from the NodeMCU, enrolls its
 public key, verifies every ECDSA P-256 signature, groups 60 accepted readings
 into a deterministic batch and calculates its SHA-256 proof.
 
+## Ubuntu Setup
+
+The current physical-sensor deployment runs the gateway, native Rialo CLI,
+anchor, and publisher as `systemd` services. Follow
+[`deploy/linux-edge`](../deploy/linux-edge/README.md) for the staged installer,
+dedicated service account, state directories, and logs. The commands below are
+retained for foreground diagnostics and for the original Windows prototype.
+
 ## Windows Setup
 
 Run these commands from the repository directory:
@@ -88,8 +96,20 @@ receipts are ignored by Git and remain local.
 
 ## Automatically Anchor New Batches
 
-The Rialo CLI remains inside WSL while the serial gateway runs on Windows. Start
-the watcher from PowerShell before collecting telemetry:
+On Ubuntu the watcher invokes the native Rialo CLI. On the original Windows
+deployment it invokes the same CLI through WSL. Automatic mode chooses the
+correct launcher for the operating system.
+
+Ubuntu example:
+
+```bash
+.venv/bin/python -m gateway.rialo_anchor watch \
+  --program-id PROGRAM_ID \
+  --cli-mode native \
+  --cli-project-dir /opt/rialo-edge-log
+```
+
+Windows example:
 
 ```powershell
 python -m gateway.rialo_anchor watch `
@@ -101,7 +121,8 @@ The watcher leaves existing files untouched by default. For every new batch it:
 1. verifies the device signatures and local SHA-256 proof;
 2. creates or verifies the device's one-time on-chain registration under
    `data/registrations/`;
-3. invokes the deployed Venus proof workflow through `wsl.exe`;
+3. invokes the deployed Venus proof workflow through the selected native or
+   WSL Rialo CLI;
 4. waits until the transaction is readable from Rialo DevNet;
 5. reads the created workflow state and compares it with the batch;
 6. saves a `RIALO_VERIFIED` receipt under `data/receipts/`.

@@ -21,3 +21,8 @@ reports/*.json
 .idea/
 .DS_Store
 Thumbs.db
+
+# Python caches and local virtual environments
+__pycache__/
+*.py[cod]
+.venv/

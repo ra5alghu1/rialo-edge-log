@@ -1,0 +1,20 @@
+[Unit]
+Description=Rialo Edge Log Devnet anchor
+After=network-online.target rialo-edge-gateway.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@SERVICE_USER@
+Group=@SERVICE_USER@
+WorkingDirectory=@REPO_ROOT@
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/etc/rialo-edge-log/edge.env
+ExecStart=@REPO_ROOT@/.venv/bin/python -m gateway.rialo_anchor watch --include-existing --batch-dir /var/lib/rialo-edge-log/data/batches --registry /var/lib/rialo-edge-log/data/device_registry.json --receipt-dir /var/lib/rialo-edge-log/data/receipts --registration-dir /var/lib/rialo-edge-log/data/registrations --program-id ${RIALO_PROGRAM_ID} --rpc-url ${RIALO_RPC_URL} --cli-rpc-url ${RIALO_CLI_RPC_URL} --cli-mode native --cli-project-dir @REPO_ROOT@
+Restart=always
+RestartSec=15
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

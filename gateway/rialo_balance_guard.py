@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shlex
 import shutil
 import subprocess
 import sys
@@ -14,6 +13,7 @@ from pathlib import Path
 from typing import Any, Callable, Sequence
 
 from gateway.rialo_verify import KELVINS_PER_RLO, RialoRpcClient, RialoVerificationError
+from gateway.rialo_cli import build_shell_invocation
 
 
 DEFAULT_FEE_PAYER = "BBjJpGwN3aV3BrMPw6BCZHZue8btcqTTfXouG9Nv9Sz6"
@@ -69,36 +69,29 @@ def transaction_error(transaction_result: dict[str, Any]) -> Any:
     return meta.get("err") if isinstance(meta, dict) else None
 
 
-def wsl_directory_expression(path: str) -> str:
-    if path == "~":
-        return '"$HOME"'
-    if path.startswith("~/"):
-        suffix = path[2:]
-        if not suffix:
-            return '"$HOME"'
-        return f'"$HOME"/{shlex.quote(suffix)}'
-    return shlex.quote(path)
-
-
-def build_airdrop_invocation(amount_rlo: float, wsl_project_dir: str) -> list[str]:
+def build_airdrop_invocation(
+    amount_rlo: float,
+    wsl_project_dir: str,
+    cli_mode: str = "wsl",
+) -> list[str]:
     if amount_rlo <= 0:
         raise ValueError("airdrop amount must be positive")
     amount = format(amount_rlo, "g")
-    script = (
-        'export PATH="$HOME/.local/share/rialo/bin:$PATH"; '
-        f"cd -- {wsl_directory_expression(wsl_project_dir)} "
-        f"&& rialo client airdrop --amount {amount}"
+    return build_shell_invocation(
+        f"rialo client airdrop --amount {amount}",
+        wsl_project_dir,
+        cli_mode=cli_mode,
     )
-    return ["wsl.exe", "--", "bash", "-lc", script]
 
 
 def invoke_airdrop(
     amount_rlo: float,
     wsl_project_dir: str,
     runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+    cli_mode: str = "auto",
 ) -> str:
     completed = runner(
-        build_airdrop_invocation(amount_rlo, wsl_project_dir),
+        build_airdrop_invocation(amount_rlo, wsl_project_dir, cli_mode=cli_mode),
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -208,6 +201,7 @@ def run_guard(args: argparse.Namespace) -> int:
                     output = invoke_airdrop(
                         args.airdrop_amount_rlo,
                         args.wsl_project_dir,
+                        cli_mode=args.cli_mode,
                     )
                     if output:
                         print(f"[AIRDROP] {output}")
@@ -252,7 +246,17 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--fee-payer", default=DEFAULT_FEE_PAYER)
     parser.add_argument("--rpc-url", default="http://devnet.rialo.io:4100")
     parser.add_argument("--receipt-dir", type=Path, default=Path("data/receipts"))
-    parser.add_argument("--wsl-project-dir", default=DEFAULT_WSL_PROJECT_DIR)
+    parser.add_argument(
+        "--cli-mode",
+        choices=("auto", "native", "wsl"),
+        default="auto",
+    )
+    parser.add_argument(
+        "--cli-project-dir",
+        "--wsl-project-dir",
+        dest="wsl_project_dir",
+        default=DEFAULT_WSL_PROJECT_DIR,
+    )
     parser.add_argument("--low-balance-rlo", type=float, default=DEFAULT_LOW_BALANCE_RLO)
     parser.add_argument("--airdrop-amount-rlo", type=float, default=DEFAULT_AIRDROP_AMOUNT_RLO)
     parser.add_argument("--recovery-balance-rlo", type=float, default=DEFAULT_RECOVERY_BALANCE_RLO)

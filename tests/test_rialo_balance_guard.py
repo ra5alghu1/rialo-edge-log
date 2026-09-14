@@ -52,6 +52,16 @@ class RialoBalanceGuardTests(unittest.TestCase):
         self.assertIn("rialo client airdrop --amount 1", command[4])
         self.assertIn("$HOME", command[4])
 
+    def test_airdrop_invocation_runs_natively_on_linux(self) -> None:
+        command = build_airdrop_invocation(
+            1.0,
+            "/opt/rialo-edge-log",
+            cli_mode="native",
+        )
+        self.assertEqual(command[:2], ["bash", "-lc"])
+        self.assertNotIn("wsl.exe", command)
+        self.assertIn("rialo client airdrop --amount 1", command[2])
+
     def test_rent_failed_pending_is_archived_for_fresh_resubmission(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             receipt_dir = Path(temp)

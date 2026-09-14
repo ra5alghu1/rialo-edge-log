@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="690" viewBox="0 0 1200 690" role="img" aria-labelledby="title desc">
   <title id="title">Rialo Edge Log architecture</title>
-  <desc id="desc">Signed telemetry travels from a NodeMCU through a Windows gateway to Rialo Devnet and a public VPS. A visitor verifies the archive directly against Rialo.</desc>
+  <desc id="desc">Signed physical telemetry travels from an ESP8266 and DS18B20 through an Ubuntu edge gateway to Rialo Devnet and a public VPS. A visitor verifies the archive directly against Rialo.</desc>
   <defs>
     <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
       <path d="M32 0H0V32" fill="none" stroke="#263138" stroke-width="1" opacity=".55"/>
@@ -31,14 +31,14 @@
   <g filter="url(#shadow)">
     <rect class="box edge" x="60" y="205" width="235" height="165" rx="10"/>
     <text x="82" y="235" class="tag" fill="#ff7919">01 · DEVICE</text>
-    <text x="82" y="276" class="name">NodeMCU V3</text>
-    <text x="82" y="306" class="copy">ESP8266 signs every reading</text>
+    <text x="82" y="276" class="name">ESP8266 + DS18B20</text>
+    <text x="82" y="306" class="copy">Signs every physical reading</text>
     <text x="82" y="334" class="small">ECDSA P-256 · 5 s interval</text>
     <circle cx="263" cy="237" r="7" fill="#70e6c4"/>
 
     <rect class="box edge" x="355" y="205" width="260" height="165" rx="10"/>
     <text x="377" y="235" class="tag" fill="#ff7919">02 · EDGE COMPUTER</text>
-    <text x="377" y="276" class="name">Windows + WSL</text>
+    <text x="377" y="276" class="name">Ubuntu + systemd</text>
     <text x="377" y="306" class="copy">Verify · batch · anchor · publish</text>
     <text x="377" y="334" class="small">private keys and wallet stay here</text>
 
