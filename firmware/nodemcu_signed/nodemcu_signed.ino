@@ -185,9 +185,16 @@ void setup() {
   Serial.begin(kSerialBaud);
   delay(150);
 
+  Serial.println("[BOOT] setup entered; allocating signing stack");
+  Serial.flush();
+
   stack_thunk_add_ref();
+  Serial.println("[BOOT] signing stack ready; reading device identity");
+  Serial.flush();
   snprintf(deviceId, sizeof(deviceId), "edge-%06X", ESP.getChipId());
   detectResetReason();
+  Serial.println("[BOOT] identity ready; generating boot ID");
+  Serial.flush();
   bootId = os_random();
   if (bootId == 0) bootId = ESP.getCycleCount() ^ ESP.getChipId();
   if (kTamperPin >= 0) {
@@ -196,7 +203,11 @@ void setup() {
 
   ESP.wdtEnable(kWatchdogTimeoutMs);
   ESP.wdtFeed();
+  Serial.println("[BOOT] scanning DS18B20 on D4/GPIO2");
+  Serial.flush();
   temperatureSensors.begin();
+  Serial.println("[BOOT] sensor scan finished");
+  Serial.flush();
 
   Serial.println();
   Serial.println("Rialo Edge Log - signed NodeMCU telemetry");
