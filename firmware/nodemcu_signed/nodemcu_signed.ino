@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#include <DallasTemperature.h>
+#include <OneWire.h>
 #include <StackThunk.h>
 #include <bearssl/bearssl.h>
 #include <user_interface.h>
@@ -30,8 +32,7 @@ namespace {
 constexpr uint32_t kSerialBaud = 115200;
 constexpr uint32_t kSampleIntervalMs = 5000;
 constexpr uint32_t kWatchdogTimeoutMs = 8000;
-constexpr int32_t kMinimumTemperatureMilliC = 3500;
-constexpr int32_t kMaximumTemperatureMilliC = 5500;
+constexpr uint8_t kOneWirePin = D4;  // GPIO2 on NodeMCU.
 constexpr size_t kSha256Length = 32;
 constexpr size_t kRawP256SignatureLength = 64;
 
@@ -45,20 +46,21 @@ char resetReason[24] = "unknown";
 uint32_t bootId = 0;
 uint32_t sequenceNumber = 0;
 uint32_t nextSampleAtMs = 0;
-int32_t simulatedTemperatureMilliC = 4200;
+OneWire oneWire(kOneWirePin);
+DallasTemperature temperatureSensors(&oneWire);
 
-void blinkStatusLed() {
-  digitalWrite(LED_BUILTIN, LOW);
-  delay(35);
-  digitalWrite(LED_BUILTIN, HIGH);
-}
-
-void updateSimulatedTemperature() {
-  simulatedTemperatureMilliC += random(-80, 81);
-  simulatedTemperatureMilliC = constrain(
-      simulatedTemperatureMilliC,
-      kMinimumTemperatureMilliC,
-      kMaximumTemperatureMilliC);
+bool readTemperatureMilliC(int32_t* value) {
+  ESP.wdtFeed();
+  temperatureSensors.requestTemperatures();
+  ESP.wdtFeed();
+  const float temperatureC = temperatureSensors.getTempCByIndex(0);
+  if (temperatureC == DEVICE_DISCONNECTED_C || isnan(temperatureC) ||
+      temperatureC < -55.0f || temperatureC > 125.0f ||
+      abs(temperatureC - 85.0f) < 0.001f) {
+    return false;
+  }
+  *value = static_cast<int32_t>(lroundf(temperatureC * 1000.0f));
+  return true;
 }
 
 void bytesToHex(
@@ -131,7 +133,7 @@ void printRegistration() {
       DEVICE_PUBLIC_KEY_HEX);
 }
 
-void printSignedTelemetry() {
+void printSignedTelemetry(int32_t temperatureMilliC) {
   ++sequenceNumber;
   const uint32_t uptimeMs = millis();
   const bool tamperOpen = isTamperOpen();
@@ -140,11 +142,11 @@ void printSignedTelemetry() {
   snprintf(
       canonicalPayload,
       sizeof(canonicalPayload),
-      "3|%s|%lu|%lu|%ld|1|%lu|%s|%u",
+      "3|%s|%lu|%lu|%ld|0|%lu|%s|%u",
       deviceId,
       static_cast<unsigned long>(sequenceNumber),
       static_cast<unsigned long>(uptimeMs),
-      static_cast<long>(simulatedTemperatureMilliC),
+      static_cast<long>(temperatureMilliC),
       static_cast<unsigned long>(bootId),
       resetReason,
       tamperOpen ? 1U : 0U);
@@ -162,15 +164,15 @@ void printSignedTelemetry() {
       "{\"message_type\":\"telemetry\",\"schema_version\":3,"
       "\"device_id\":\"%s\",\"sequence\":%lu,\"uptime_ms\":%lu,"
       "\"temperature_milli_c\":%ld,\"temperature_c\":%.3f,"
-      "\"simulated\":true,\"boot_id\":%lu,"
+      "\"simulated\":false,\"boot_id\":%lu,"
       "\"reset_reason\":\"%s\",\"tamper_open\":%s,"
       "\"signature_algorithm\":\"ecdsa-p256-sha256-raw\","
       "\"signature\":\"%s\"}\n",
       deviceId,
       static_cast<unsigned long>(sequenceNumber),
       static_cast<unsigned long>(uptimeMs),
-      static_cast<long>(simulatedTemperatureMilliC),
-      static_cast<double>(simulatedTemperatureMilliC) / 1000.0,
+      static_cast<long>(temperatureMilliC),
+      static_cast<double>(temperatureMilliC) / 1000.0,
       static_cast<unsigned long>(bootId),
       resetReason,
       tamperOpen ? "true" : "false",
@@ -180,9 +182,6 @@ void printSignedTelemetry() {
 }  // namespace
 
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
-
   Serial.begin(kSerialBaud);
   delay(150);
 
@@ -191,19 +190,20 @@ void setup() {
   detectResetReason();
   bootId = os_random();
   if (bootId == 0) bootId = ESP.getCycleCount() ^ ESP.getChipId();
-  randomSeed(bootId);
   if (kTamperPin >= 0) {
     pinMode(kTamperPin, kTamperOpenWhenHigh ? INPUT_PULLUP : INPUT);
   }
 
   ESP.wdtEnable(kWatchdogTimeoutMs);
   ESP.wdtFeed();
+  temperatureSensors.begin();
 
   Serial.println();
   Serial.println("Rialo Edge Log - signed NodeMCU telemetry");
   Serial.printf("Device ID: %s\n", deviceId);
   Serial.printf("Boot ID: %08lx, reset: %s\n", static_cast<unsigned long>(bootId), resetReason);
   Serial.printf("Watchdog: enabled (%lu ms)\n", static_cast<unsigned long>(kWatchdogTimeoutMs));
+  Serial.printf("DS18B20: D4/GPIO2, sensors=%u\n", temperatureSensors.getDeviceCount());
   printRegistration();
   nextSampleAtMs = millis();
   ESP.wdtFeed();
@@ -219,8 +219,12 @@ void loop() {
   }
 
   nextSampleAtMs = nowMs + kSampleIntervalMs;
-  updateSimulatedTemperature();
-  printSignedTelemetry();
-  blinkStatusLed();
+  int32_t temperatureMilliC = 0;
+  if (!readTemperatureMilliC(&temperatureMilliC)) {
+    Serial.println("SENSOR_ERROR: DS18B20 missing or returned an invalid value");
+    ESP.wdtFeed();
+    return;
+  }
+  printSignedTelemetry(temperatureMilliC);
   ESP.wdtFeed();
 }

@@ -6,6 +6,13 @@ Notable changes to Rialo Edge Log are recorded here as the project evolves.
 
 ### Added
 
+- Added physical DS18B20 acquisition on `D4/GPIO2`; invalid and disconnected
+  sensor values are never signed.
+- Added native Linux Rialo CLI execution and an Ubuntu `systemd` deployment for
+  the gateway, anchor, publisher, optional RPC tunnel, and balance guard.
+- Added an explicit deployment transition: the original Windows simulator is
+  retained as prototype history, while the Ubuntu physical-sensor deployment
+  receives a new device key and on-chain identity.
 - Deployed the device-registration Venus program at `GVJpRi8SVURsjKbLC84Azk24vV2cK3ib74aXRk5hdatF` on Rialo Devnet.
 - Added a one-time Rialo workflow that binds each device ID to its P-256 public-key fingerprint, signed by the project's published registrar wallet.
 - Added independent device-registration checks to both the Python verifier and the browser verifier before new proof bundles are accepted.
@@ -19,6 +26,10 @@ Notable changes to Rialo Edge Log are recorded here as the project evolves.
 
 ### Fixed
 
+- Stopped driving the NodeMCU built-in LED because it shares `GPIO2` with the
+  physical DS18B20 one-wire bus.
+- Updated the Windows RPC-routing regression test after route construction was
+  centralized, restoring useful Python CI coverage.
 - Parsed the WSL default gateway in PowerShell so the complete route line can
   never be passed to the anchor as a malformed RPC URL.
 - Added an optional self-healing SSH tunnel for Windows networks that cannot

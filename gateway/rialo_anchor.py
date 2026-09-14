@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Submit verified telemetry batches to Rialo through the CLI installed in WSL."""
+"""Submit verified telemetry batches through a native or WSL Rialo CLI."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import re
-import shlex
 import subprocess
 import sys
 import time
@@ -20,6 +19,7 @@ from gateway.rialo_args import (
     build_registration_command,
     registration_workflow_slug,
 )
+from gateway.rialo_cli import build_shell_invocation, shell_directory_expression
 from gateway.rialo_verify import (
     DEFAULT_RPC_URL,
     RialoRpcClient,
@@ -153,14 +153,8 @@ def load_pending_submission(
 
 
 def wsl_directory_expression(path: str) -> str:
-    if path == "~":
-        return '"$HOME"'
-    if path.startswith("~/"):
-        suffix = path[2:]
-        if not suffix:
-            return '"$HOME"'
-        return f'"$HOME"/{shlex.quote(suffix)}'
-    return shlex.quote(path)
+    """Backward-compatible alias used by existing Windows deployments."""
+    return shell_directory_expression(path)
 
 
 def build_wsl_invocation(
@@ -171,11 +165,21 @@ def build_wsl_invocation(
 ) -> list[str]:
     validate_program_id(program_id)
     rialo_command = build_command(batch, program_id, rpc_url=rpc_url)
-    script = (
-        'export PATH="$HOME/.local/share/rialo/bin:$PATH"; '
-        f"cd -- {wsl_directory_expression(wsl_project_dir)} && {rialo_command}"
+    return build_shell_invocation(rialo_command, wsl_project_dir, cli_mode="wsl")
+
+
+def build_native_invocation(
+    batch: dict[str, Any],
+    program_id: str,
+    project_dir: str,
+    rpc_url: str | None = None,
+) -> list[str]:
+    validate_program_id(program_id)
+    return build_shell_invocation(
+        build_command(batch, program_id, rpc_url=rpc_url),
+        project_dir,
+        cli_mode="native",
     )
-    return ["wsl.exe", "--", "bash", "-lc", script]
 
 
 def build_wsl_registration_invocation(
@@ -192,11 +196,43 @@ def build_wsl_registration_invocation(
         program_id,
         rpc_url=rpc_url,
     )
-    script = (
-        'export PATH="$HOME/.local/share/rialo/bin:$PATH"; '
-        f"cd -- {wsl_directory_expression(wsl_project_dir)} && {rialo_command}"
+    return build_shell_invocation(rialo_command, wsl_project_dir, cli_mode="wsl")
+
+
+def build_cli_invocation(
+    batch: dict[str, Any],
+    program_id: str,
+    project_dir: str,
+    rpc_url: str | None = None,
+    cli_mode: str = "auto",
+) -> list[str]:
+    validate_program_id(program_id)
+    return build_shell_invocation(
+        build_command(batch, program_id, rpc_url=rpc_url),
+        project_dir,
+        cli_mode=cli_mode,
     )
-    return ["wsl.exe", "--", "bash", "-lc", script]
+
+
+def build_registration_cli_invocation(
+    device_id: str,
+    public_key_fingerprint_value: str,
+    program_id: str,
+    project_dir: str,
+    rpc_url: str | None = None,
+    cli_mode: str = "auto",
+) -> list[str]:
+    validate_program_id(program_id)
+    return build_shell_invocation(
+        build_registration_command(
+            device_id,
+            public_key_fingerprint_value,
+            program_id,
+            rpc_url=rpc_url,
+        ),
+        project_dir,
+        cli_mode=cli_mode,
+    )
 
 
 def extract_transaction_signature(output: str) -> str:
@@ -212,9 +248,10 @@ def invoke_rialo_cli(
     wsl_project_dir: str,
     runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
     rpc_url: str | None = None,
+    cli_mode: str = "auto",
 ) -> tuple[str, str]:
-    command = build_wsl_invocation(
-        batch, program_id, wsl_project_dir, rpc_url=rpc_url
+    command = build_cli_invocation(
+        batch, program_id, wsl_project_dir, rpc_url=rpc_url, cli_mode=cli_mode
     )
     try:
         completed = runner(
@@ -226,7 +263,7 @@ def invoke_rialo_cli(
             check=False,
         )
     except OSError as exc:
-        raise RialoAnchorError(f"cannot start WSL: {exc}") from exc
+        raise RialoAnchorError(f"cannot start Rialo CLI: {exc}") from exc
 
     output = "\n".join(
         part.strip() for part in (completed.stdout, completed.stderr) if part.strip()
@@ -245,13 +282,15 @@ def invoke_registration_cli(
     wsl_project_dir: str,
     runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
     rpc_url: str | None = None,
+    cli_mode: str = "auto",
 ) -> tuple[str, str]:
-    command = build_wsl_registration_invocation(
+    command = build_registration_cli_invocation(
         device_id,
         public_key_fingerprint_value,
         program_id,
         wsl_project_dir,
         rpc_url=rpc_url,
+        cli_mode=cli_mode,
     )
     try:
         completed = runner(
@@ -263,7 +302,7 @@ def invoke_registration_cli(
             check=False,
         )
     except OSError as exc:
-        raise RialoAnchorError(f"cannot start WSL: {exc}") from exc
+        raise RialoAnchorError(f"cannot start Rialo CLI: {exc}") from exc
     output = "\n".join(
         part.strip() for part in (completed.stdout, completed.stderr) if part.strip()
     )
@@ -427,6 +466,7 @@ def submit_device_registration(
     client: RialoRpcClient | None = None,
     runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
     cli_rpc_url: str | None = None,
+    cli_mode: str = "auto",
 ) -> tuple[Path, str, str, str]:
     validate_program_id(program_id)
     fingerprint = public_key_fingerprint(public_key_sec1)
@@ -482,6 +522,7 @@ def submit_device_registration(
             wsl_project_dir,
             runner=runner,
             rpc_url=cli_rpc_url or rpc_url,
+            cli_mode=cli_mode,
         )
         save_pending_registration(
             device_id,
@@ -534,6 +575,7 @@ def register_batch_device(
     client: RialoRpcClient | None = None,
     runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
     cli_rpc_url: str | None = None,
+    cli_mode: str = "auto",
 ) -> tuple[Path, str, str, str]:
     registry = load_registry(registry_path)
     device_id = batch.get("device_id")
@@ -556,6 +598,7 @@ def register_batch_device(
         client=client,
         runner=runner,
         cli_rpc_url=cli_rpc_url,
+        cli_mode=cli_mode,
     )
 
 
@@ -572,6 +615,7 @@ def submit_batch(
     runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
     registration_dir: Path | None = None,
     cli_rpc_url: str | None = None,
+    cli_mode: str = "auto",
 ) -> tuple[Path, str, str, str]:
     validate_program_id(program_id)
     batch, _ = load_verified_batch(batch_path, registry_path)
@@ -592,6 +636,7 @@ def submit_batch(
             client=active_client,
             runner=runner,
             cli_rpc_url=cli_rpc_url,
+            cli_mode=cli_mode,
         )
 
     destination = receipt_path(batch, receipt_dir)
@@ -610,6 +655,7 @@ def submit_batch(
             wsl_project_dir,
             runner=runner,
             rpc_url=cli_rpc_url or rpc_url,
+            cli_mode=cli_mode,
         )
         save_pending_submission(batch, receipt_dir, program_id, signature)
     else:
@@ -703,6 +749,7 @@ def watch_batches(args: argparse.Namespace) -> int:
                         args.rpc_wait_seconds,
                         registration_dir=getattr(args, "registration_dir", None),
                         cli_rpc_url=getattr(args, "cli_rpc_url", None),
+                        cli_mode=getattr(args, "cli_mode", "auto"),
                     )
                 except (RialoAnchorError, RialoVerificationError) as exc:
                     cycle_failed = True
@@ -730,7 +777,7 @@ def add_common_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--rpc-url", default=DEFAULT_RPC_URL)
     parser.add_argument(
         "--cli-rpc-url",
-        help="RPC URL used by the Rialo CLI inside WSL; defaults to --rpc-url",
+        help="RPC URL used by the Rialo CLI; defaults to --rpc-url",
     )
     parser.add_argument(
         "--registry", type=Path, default=Path("data/device_registry.json")
@@ -741,7 +788,19 @@ def add_common_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--registration-dir", type=Path, default=Path("data/registrations")
     )
-    parser.add_argument("--wsl-project-dir", default=DEFAULT_WSL_PROJECT_DIR)
+    parser.add_argument(
+        "--cli-mode",
+        choices=("auto", "native", "wsl"),
+        default="auto",
+        help="run Rialo directly on Linux or through WSL on Windows",
+    )
+    parser.add_argument(
+        "--cli-project-dir",
+        "--wsl-project-dir",
+        dest="wsl_project_dir",
+        default=DEFAULT_WSL_PROJECT_DIR,
+        help="project directory visible to the selected Rialo CLI",
+    )
     parser.add_argument("--rpc-wait-seconds", type=float, default=90.0)
 
 
@@ -788,6 +847,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 force=args.force,
                 registration_dir=args.registration_dir,
                 cli_rpc_url=args.cli_rpc_url,
+                cli_mode=args.cli_mode,
             )
             if cli_output:
                 print(cli_output)

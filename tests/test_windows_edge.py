@@ -41,13 +41,14 @@ class WindowsEdgeDeploymentTests(unittest.TestCase):
             ROOT / "deploy" / "windows-edge" / "Invoke-EdgeProcess.ps1"
         ).read_text(encoding="utf-8")
 
-        self.assertIn('"--rpc-url", $rpcUrl', runner)
-        self.assertIn('"--cli-rpc-url", $cliRpcUrl', runner)
+        self.assertIn("function Get-RialoRpcRoutes", runner)
+        self.assertIn('"--rpc-url", [string]$routes.RpcUrl', runner)
+        self.assertIn('"--cli-rpc-url", [string]$routes.CliRpcUrl', runner)
         self.assertIn("ip route show default", runner)
         self.assertIn("[regex]::Match", runner)
         self.assertNotIn("awk '/default/", runner)
-        self.assertGreater(
-            runner.index("ip route show default"),
+        self.assertLess(
+            runner.index("function Get-RialoRpcRoutes"),
             runner.index('"anchor" {'),
         )
 

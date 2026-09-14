@@ -1,0 +1,18 @@
+[Unit]
+Description=Restricted SSH tunnel for Rialo Devnet RPC
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@SERVICE_USER@
+Group=@SERVICE_USER@
+EnvironmentFile=/etc/rialo-edge-log/edge.env
+ExecStart=/usr/bin/ssh -NT -L 127.0.0.1:${RIALO_TUNNEL_LOCAL_PORT}:${RIALO_TUNNEL_DESTINATION} -i /var/lib/rialo-edge-log/secrets/rpc-tunnel -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=yes ${RIALO_TUNNEL_USER}@${RIALO_TUNNEL_HOST}
+Restart=always
+RestartSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

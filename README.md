@@ -5,30 +5,33 @@ detectable. An ESP8266 signs each reading, a gateway groups the readings into
 batches, and the batch digest is recorded on Rialo Devnet. The readings stay
 off-chain and can be published to a public archive for browser-based checks.
 
-The current firmware uses simulated temperature values. A DS18B20 is the next
-hardware step; replacing the data source will not change the signing, batching,
-or verification flow.
+The current firmware targets a physical DS18B20 connected to `D4/GPIO2` on an
+ESP8266 NodeMCU. Replacing the original simulator changes only the measurement
+source; signing, batching, anchoring, and independent verification retain the
+same proof model.
 
-## Planned milestone — September 14, 2026
+## Deployment transition — September 2026
 
-The next hands-on upgrade is scheduled for **September 14, 2026**:
+The original Windows-based prototype produced simulated signed telemetry until
+the edge host was taken offline on **September 9, 2026**. The public records
+already published by that deployment remain prototype history. No telemetry
+continuity is claimed for the offline period.
 
-- connect a physical DS18B20 temperature sensor and replace the simulated
-  temperature source with real measurements;
-- migrate the always-on Rialo Edge Log services to a new dedicated server,
-  reducing the project's dependence on the current Windows host;
-- verify that signing, batching, Rialo anchoring, publication, heartbeats, and
-  browser verification continue to work end-to-end after the migration.
+The second deployment is being prepared on Ubuntu with a new Type-C NodeMCU,
+a physical DS18B20, a newly generated device key, and a new on-chain device
+registration. The historical device identity is not reused or silently
+re-keyed. The VPS archive remains separate from the edge host.
 
-The goal is to move from a simulated hardware prototype to a continuously
-running physical edge-data pipeline without changing the existing proof model.
+Migration is complete only after signing, batching, Rialo anchoring,
+publication, heartbeats, browser verification, and automatic restart have been
+validated end-to-end on the new host.
 
 ## How it works
 
 ```text
-ESP8266 -> Windows gateway -> signed batch -> Rialo Devnet
-                                      |
-                                      +-> public archive -> browser verification
+ESP8266 + DS18B20 -> Ubuntu gateway -> signed batch -> Rialo Devnet
+                                             |
+                                             +-> public archive -> browser verification
 ```
 
 1. The ESP8266 signs every JSON reading with its own ECDSA P-256 key.
@@ -49,25 +52,27 @@ computer. Raw telemetry is stored off-chain.
 The editable Mermaid source is available in
 [`docs/architecture.mmd`](docs/architecture.mmd).
 
-## Hardware prototype
+## Hardware deployments
 
 ![NodeMCU V3 used by Rialo Edge Log](docs/hardware/nodemcu-v3-prototype.jpg)
 
-This is the NodeMCU V3 currently producing and signing the live telemetry shown
-in the public archive. Temperature is still simulated in firmware; physical
-DS18B20 integration is scheduled for September 14, 2026.
+This NodeMCU V3 produced the first signed simulator records. It is retained here
+as the documented prototype rather than presented as the current physical
+sensor. The Ubuntu deployment uses a different ESP8266 NodeMCU with a USB-C
+connector and a DS18B20 wired to `D4/GPIO2`.
 
-## What is running now
+## Current project state
 
-- NodeMCU V3 telemetry simulator with per-reading signatures
-- Windows serial gateway with five-minute batches (60 readings by default)
-- automatic Rialo Devnet submission through the CLI in WSL
+- historical simulator batches from the retired Windows prototype
+- physical DS18B20 firmware with per-reading signatures, ready for flashing
+- native Linux gateway, anchor, publisher, balance guard, and optional RPC
+  tunnel managed by `systemd`
 - receipts linking each batch to its transaction and workflow account
 - HTTPS archive at [rialo-edge-log.xyz](https://rialo-edge-log.xyz)
 - independent browser checks and links to the matching RialoScan records
-- Docker deployment for the archive and hidden Windows background tasks
+- Docker deployment for the archive on the public VPS
 - optional self-healing SSH RPC tunnel for networks that block Rialo Devnet
-  port `4100`, shared safely by the Windows verifier and Rialo CLI in WSL
+  port `4100`
 - schema-3 firmware and verifier support for signed boot-session, reset-reason,
   and enclosure-tamper telemetry fields; existing schema-2 history remains valid
 - one-minute signed heartbeats for live device presence on the public portal
@@ -90,10 +95,10 @@ examples are intentionally not kept here because Rialo Devnet can reset.
 - [`rialo/edge-log-proof`](rialo/edge-log-proof) — Venus workflow
 - [`archive`](archive) — public archive and API
 - [`portal`](portal) — RU/EN browser interface and verifier
-- [`deploy`](deploy) — VPS and Windows task setup
+- [`deploy`](deploy) — VPS, Windows prototype, and Ubuntu edge setup
 
-Each directory has its own setup notes. For the complete Windows data path,
-start with [`gateway/README.md`](gateway/README.md).
+Each directory has its own setup notes. For the current physical-sensor host,
+start with [`deploy/linux-edge/README.md`](deploy/linux-edge/README.md).
 
 ## What the proof does and does not prove
 
@@ -114,10 +119,11 @@ the latest reading and matching its key to a previously published device.
 
 ## Next steps
 
-- **September 14, 2026:** connect the physical DS18B20 and switch from simulated
-  temperature to real sensor readings
-- **September 14, 2026:** migrate the always-on stack to the new dedicated
-  server and validate the full pipeline after the move
+- flash the new Type-C NodeMCU with its own locally generated device key
+- validate the DS18B20 on `D4/GPIO2` before starting any on-chain submission
+- activate the Ubuntu services in stages without modifying the co-located
+  Orbinum validator
+- register the new device identity on-chain and verify the first public proof
 - make workflow identifiers easier to trace across long-running deployments
 - add an end-to-end test covering collection, anchoring, publication, and
   browser verification
