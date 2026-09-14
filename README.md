@@ -121,8 +121,8 @@ the latest reading and matching its key to a previously published device.
 
 - flash the new Type-C NodeMCU with its own locally generated device key
 - validate the DS18B20 on `D4/GPIO2` before starting any on-chain submission
-- activate the Ubuntu services in stages without modifying the co-located
-  Orbinum validator
+- activate the Ubuntu services in stages without modifying unrelated services
+  on the host
 - register the new device identity on-chain and verify the first public proof
 - make workflow identifiers easier to trace across long-running deployments
 - add an end-to-end test covering collection, anchoring, publication, and

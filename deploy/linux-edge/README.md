@@ -2,7 +2,7 @@
 
 This deployment runs the serial gateway, Rialo anchor, archive publisher, and
 optional Devnet helpers as isolated `systemd` services. It does not modify
-Docker or the Orbinum validator.
+unrelated services running on the same host.
 
 The installer creates a dedicated unprivileged `rialo-edge` account, grants it
 serial access through the `dialout` group, keeps writable state under
