@@ -20,7 +20,11 @@ from gateway.rialo_args import device_id_to_u64, registration_workflow_slug
 
 
 DEFAULT_RPC_URL = "http://devnet.rialo.io:4100"
-DEFAULT_DEVICE_REGISTRAR = "BBjJpGwN3aV3BrMPw6BCZHZue8btcqTTfXouG9Nv9Sz6"
+DEFAULT_DEVICE_REGISTRARS = (
+    "BBjJpGwN3aV3BrMPw6BCZHZue8btcqTTfXouG9Nv9Sz6",
+    "2bmtDvEfj4wkp1cXjJqoFJbTEpRtbyhQ8aSeyM4bNHaf",
+)
+DEFAULT_DEVICE_REGISTRAR = DEFAULT_DEVICE_REGISTRARS[0]
 WORKFLOW_STATE_SIZE = 104
 KELVINS_PER_RLO = 1_000_000_000
 
@@ -225,7 +229,7 @@ def verify_registration_receipt(
     receipt: dict[str, Any],
     client: RialoRpcClient,
     expected_program_id: str | None = None,
-    expected_registrar: str | None = None,
+    expected_registrar: str | tuple[str, ...] | list[str] | set[str] | None = None,
 ) -> dict[str, Any]:
     if (
         receipt.get("schema_version") != 1
@@ -257,8 +261,14 @@ def verify_registration_receipt(
     registrar = extract_fee_payer(transaction)
     if registrar != receipt["registrar"]:
         raise RialoVerificationError("device registration signer does not match")
-    if expected_registrar is not None and registrar != expected_registrar:
-        raise RialoVerificationError("device registration signer is not trusted")
+    if expected_registrar is not None:
+        trusted_registrars = (
+            {expected_registrar}
+            if isinstance(expected_registrar, str)
+            else set(expected_registrar)
+        )
+        if registrar not in trusted_registrars:
+            raise RialoVerificationError("device registration signer is not trusted")
     state = decode_account_state(
         client.get_account_info(workflow), receipt["program_id"]
     )

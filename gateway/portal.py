@@ -23,7 +23,7 @@ from gateway.edge_gateway import (
     verify_batch_file,
 )
 from gateway.rialo_verify import (
-    DEFAULT_DEVICE_REGISTRAR,
+    DEFAULT_DEVICE_REGISTRARS,
     DEFAULT_RPC_URL,
     RialoRpcClient,
     RialoVerificationError,
@@ -98,7 +98,7 @@ class PortalStore:
         registry_path: Path | None = None,
         rpc_url: str = DEFAULT_RPC_URL,
         client_factory: Callable[[str], RialoRpcClient] | None = None,
-        expected_device_registrar: str = DEFAULT_DEVICE_REGISTRAR,
+        expected_device_registrar: str | tuple[str, ...] | list[str] | set[str] = DEFAULT_DEVICE_REGISTRARS,
     ) -> None:
         self.data_directory = data_directory
         self.batch_directory = data_directory / "batches"

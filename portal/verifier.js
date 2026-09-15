@@ -2,7 +2,11 @@
   "use strict";
 
   const DEFAULT_RPC_URL = "https://devnet.rialoscan.org/api/rpc";
-  const DEFAULT_DEVICE_REGISTRAR = "BBjJpGwN3aV3BrMPw6BCZHZue8btcqTTfXouG9Nv9Sz6";
+  const DEFAULT_DEVICE_REGISTRARS = Object.freeze([
+    "BBjJpGwN3aV3BrMPw6BCZHZue8btcqTTfXouG9Nv9Sz6",
+    "2bmtDvEfj4wkp1cXjJqoFJbTEpRtbyhQ8aSeyM4bNHaf",
+  ]);
+  const DEFAULT_DEVICE_REGISTRAR = DEFAULT_DEVICE_REGISTRARS[0];
   const TEXT_ENCODER = new TextEncoder();
 
   class VerificationError extends Error {
@@ -219,14 +223,17 @@
     );
   }
 
-  async function verifyRegistrationIdentity(registration, batch, receipt, expectedRegistrar) {
+  async function verifyRegistrationIdentity(registration, batch, receipt, expectedRegistrars) {
     assert(registration && registration.schema_version === 1, "Device registration receipt is missing", "INVALID_RECEIPT");
     assert(registration.status === "RIALO_DEVICE_REGISTERED", "Device registration status is invalid", "INVALID_RECEIPT");
     assert(registration.device_id === batch.device_id, "Device registration belongs to another device", "INVALID_RECEIPT");
     assert(registration.public_key_fingerprint === batch.device_public_key_fingerprint, "Device registration contains another public key", "INVALID_RECEIPT");
     assert(registration.program_id === receipt.program_id, "Device registration uses another program", "INVALID_RECEIPT");
     assert(registration.workflow_slug === await registrationWorkflowSlug(batch.device_id), "Device registration workflow slug is invalid", "INVALID_RECEIPT");
-    assert(registration.registrar === expectedRegistrar, "Device registration signer is not trusted", "INVALID_RECEIPT");
+    const trustedRegistrars = Array.isArray(expectedRegistrars)
+      ? expectedRegistrars
+      : [expectedRegistrars];
+    assert(trustedRegistrars.includes(registration.registrar), "Device registration signer is not trusted", "INVALID_RECEIPT");
     for (const field of ["transaction_signature", "workflow_address", "registrar"]) {
       assert(typeof registration[field] === "string" && registration[field], `Device registration ${field} is missing`, "INVALID_RECEIPT");
     }
@@ -311,7 +318,7 @@
         registration,
         batch,
         receipt,
-        options.expectedRegistrar || DEFAULT_DEVICE_REGISTRAR,
+        options.expectedRegistrars || options.expectedRegistrar || DEFAULT_DEVICE_REGISTRARS,
       );
       requests.push(
         rpcCall("getTransaction", [{ signature: registration.transaction_signature }]),
@@ -360,6 +367,7 @@
 
   global.RialoVerifier = {
     DEFAULT_RPC_URL,
+    DEFAULT_DEVICE_REGISTRARS,
     DEFAULT_DEVICE_REGISTRAR,
     VerificationError,
     calculateBatchDigest,

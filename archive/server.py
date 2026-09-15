@@ -27,7 +27,7 @@ from gateway.edge_gateway import (
 )
 from gateway.portal import PortalError, PortalStore, temperature_stats
 from gateway.rialo_verify import (
-    DEFAULT_DEVICE_REGISTRAR,
+    DEFAULT_DEVICE_REGISTRARS,
     DEFAULT_RPC_URL,
     KELVINS_PER_RLO,
     RialoRpcClient,
@@ -79,7 +79,7 @@ class ArchiveStore:
         database_path: Path,
         rpc_url: str = DEFAULT_RPC_URL,
         client_factory: Callable[[str], RialoRpcClient] | None = None,
-        expected_device_registrar: str = DEFAULT_DEVICE_REGISTRAR,
+        expected_device_registrar: str | tuple[str, ...] | list[str] | set[str] = DEFAULT_DEVICE_REGISTRARS,
     ) -> None:
         self.database_path = database_path
         self.rpc_url = rpc_url
