@@ -6,6 +6,14 @@ Notable changes to Rialo Edge Log are recorded here as the project evolves.
 
 ### Added
 
+- Completed the Ubuntu physical-sensor migration on September 15, 2026 with
+  device `edge-77BD19`: signed DS18B20 telemetry, automatic Rialo anchoring,
+  archive publication, live heartbeats, browser verification, and `systemd`
+  restart are operational end-to-end.
+- Added registrar rotation support. The historical registrar
+  `BBjJpGwN3aV3BrMPw6BCZHZue8btcqTTfXouG9Nv9Sz6` remains trusted for existing
+  history, while new Ubuntu registrations use
+  `2bmtDvEfj4wkp1cXjJqoFJbTEpRtbyhQ8aSeyM4bNHaf`.
 - Added physical DS18B20 acquisition on `D4/GPIO2`; invalid and disconnected
   sensor values are never signed.
 - Added native Linux Rialo CLI execution and an Ubuntu `systemd` deployment for

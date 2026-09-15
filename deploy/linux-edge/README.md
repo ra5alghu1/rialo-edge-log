@@ -22,9 +22,13 @@ sudo ./deploy/linux-edge/install.sh
 
 Install the Rialo CLI and wallet for the `rialo-edge` service account. Do not
 copy a device private key into the server; `device_secrets.h` belongs only in
-the firmware build directory. Preserve the existing published registrar wallet
-when it is available. A registrar rotation must be documented and added as a
-second trusted identity rather than silently replacing the old one.
+the firmware build directory.
+
+The production Ubuntu migration uses registrar
+`2bmtDvEfj4wkp1cXjJqoFJbTEpRtbyhQ8aSeyM4bNHaf`. The historical Windows
+registrar `BBjJpGwN3aV3BrMPw6BCZHZue8btcqTTfXouG9Nv9Sz6` remains trusted for
+previously published history. Registrar rotation must always add a documented
+trust root rather than silently replacing an existing one.
 
 ## Configure without starting
 
@@ -83,3 +87,7 @@ journalctl -u 'rialo-edge-*' --since today --no-pager
 
 The former Windows device remains historical evidence. No telemetry continuity
 is claimed for the period when that host was offline.
+
+The current validated physical deployment is `edge-77BD19` on Ubuntu with a
+DS18B20 connected to `D4/GPIO2`. Its first public proof was registered,
+anchored, published, and independently verified on September 15, 2026.

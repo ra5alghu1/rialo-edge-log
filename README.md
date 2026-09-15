@@ -17,14 +17,16 @@ the edge host was taken offline on **September 9, 2026**. The public records
 already published by that deployment remain prototype history. No telemetry
 continuity is claimed for the offline period.
 
-The second deployment is being prepared on Ubuntu with a new Type-C NodeMCU,
-a physical DS18B20, a newly generated device key, and a new on-chain device
-registration. The historical device identity is not reused or silently
-re-keyed. The VPS archive remains separate from the edge host.
+The second deployment is now live on Ubuntu with device `edge-77BD19`, a
+Type-C ESP8266 NodeMCU, a physical DS18B20 on `D4/GPIO2`, a newly generated
+device key, and a new on-chain device registration. The historical device
+identity was not reused or silently re-keyed. The VPS archive remains separate
+from the edge host.
 
-Migration is complete only after signing, batching, Rialo anchoring,
-publication, heartbeats, browser verification, and automatic restart have been
-validated end-to-end on the new host.
+The Ubuntu migration was validated end-to-end on September 15, 2026: signed
+telemetry, local batching, Rialo registration and anchoring, archive publication,
+live heartbeats, browser verification, and automatic `systemd` restart are all
+operational.
 
 ## How it works
 
@@ -64,7 +66,8 @@ connector and a DS18B20 wired to `D4/GPIO2`.
 ## Current project state
 
 - historical simulator batches from the retired Windows prototype
-- physical DS18B20 firmware with per-reading signatures, ready for flashing
+- live Ubuntu physical-sensor deployment: `edge-77BD19` with a DS18B20 on
+  `D4/GPIO2`
 - native Linux gateway, anchor, publisher, balance guard, and optional RPC
   tunnel managed by `systemd`
 - receipts linking each batch to its transaction and workflow account
@@ -80,8 +83,15 @@ connector and a DS18B20 wired to `D4/GPIO2`.
 
 The current Venus program ID is
 [`GVJpRi8SVURsjKbLC84Azk24vV2cK3ib74aXRk5hdatF`](https://devnet.rialoscan.org/address/GVJpRi8SVURsjKbLC84Azk24vV2cK3ib74aXRk5hdatF).
-The published registrar wallet is
-`BBjJpGwN3aV3BrMPw6BCZHZue8btcqTTfXouG9Nv9Sz6`.
+The project currently trusts two documented registrar identities:
+
+- historical Windows registrar:
+  `BBjJpGwN3aV3BrMPw6BCZHZue8btcqTTfXouG9Nv9Sz6`
+- active Ubuntu registrar:
+  `2bmtDvEfj4wkp1cXjJqoFJbTEpRtbyhQ8aSeyM4bNHaf`
+
+The historical registrar remains trusted for existing proof history; new Ubuntu
+device registrations use the active Ubuntu registrar.
 
 Current confirmed transactions, workflows and independent verification results
 are shown in the [live archive](https://rialo-edge-log.xyz). Fixed transaction
@@ -119,14 +129,9 @@ the latest reading and matching its key to a previously published device.
 
 ## Next steps
 
-- flash the new Type-C NodeMCU with its own locally generated device key
-- validate the DS18B20 on `D4/GPIO2` before starting any on-chain submission
-- activate the Ubuntu services in stages without modifying unrelated services
-  on the host
-- register the new device identity on-chain and verify the first public proof
 - make workflow identifiers easier to trace across long-running deployments
-- add an end-to-end test covering collection, anchoring, publication, and
-  browser verification
+- add an automated end-to-end regression covering physical collection,
+  anchoring, publication, and browser verification
 - replace the temporary VPS RPC route when Rialo exposes a universally
   reachable HTTPS endpoint
 - review a lower anchoring frequency for longer runs
