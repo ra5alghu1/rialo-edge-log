@@ -33,6 +33,10 @@ class RialoVerificationError(RuntimeError):
     """Raised when Rialo data cannot be fetched or decoded safely."""
 
 
+class RialoRpcNotFoundError(RialoVerificationError):
+    """Raised when an RPC endpoint explicitly reports HTTP 404."""
+
+
 class RialoRpcClient:
     def __init__(self, url: str = DEFAULT_RPC_URL, timeout: float = 20.0) -> None:
         self.url = url
@@ -51,6 +55,12 @@ class RialoRpcClient:
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 payload = json.load(response)
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                raise RialoRpcNotFoundError(
+                    f"Rialo RPC request failed: HTTP Error 404: {exc.reason}"
+                ) from exc
+            raise RialoVerificationError(f"Rialo RPC request failed: {exc}") from exc
         except (OSError, urllib.error.URLError, json.JSONDecodeError) as exc:
             raise RialoVerificationError(f"Rialo RPC request failed: {exc}") from exc
 
@@ -252,15 +262,7 @@ def verify_registration_receipt(
     if receipt["workflow_slug"] != registration_workflow_slug(device_id):
         raise RialoVerificationError("device registration workflow slug is invalid")
 
-    transaction = client.get_transaction(receipt["transaction_signature"])
-    workflow = extract_workflow_address(transaction, receipt["program_id"])
-    if workflow != receipt["workflow_address"]:
-        raise RialoVerificationError(
-            "device registration transaction points to another workflow"
-        )
-    registrar = extract_fee_payer(transaction)
-    if registrar != receipt["registrar"]:
-        raise RialoVerificationError("device registration signer does not match")
+    registrar = receipt["registrar"]
     if expected_registrar is not None:
         trusted_registrars = (
             {expected_registrar}
@@ -269,6 +271,29 @@ def verify_registration_receipt(
         )
         if registrar not in trusted_registrars:
             raise RialoVerificationError("device registration signer is not trusted")
+
+    workflow = receipt["workflow_address"]
+    transaction_history_pruned = False
+    try:
+        transaction = client.get_transaction(receipt["transaction_signature"])
+    except RialoRpcNotFoundError:
+        # Rialo Devnet RPC may prune old transaction history while the workflow
+        # account itself remains live. In this narrow case, retain the
+        # previously verified registrar identity from the local/archive receipt
+        # and prove the current registration state directly from the workflow.
+        transaction_history_pruned = True
+    else:
+        transaction_workflow = extract_workflow_address(
+            transaction, receipt["program_id"]
+        )
+        if transaction_workflow != workflow:
+            raise RialoVerificationError(
+                "device registration transaction points to another workflow"
+            )
+        transaction_registrar = extract_fee_payer(transaction)
+        if transaction_registrar != registrar:
+            raise RialoVerificationError("device registration signer does not match")
+
     state = decode_account_state(
         client.get_account_info(workflow), receipt["program_id"]
     )
@@ -285,6 +310,8 @@ def verify_registration_receipt(
         "workflow_address": workflow,
         "workflow_slug": receipt["workflow_slug"],
         "registrar": registrar,
+        "transaction_history_pruned": transaction_history_pruned,
+        "registrar_verified_from_transaction": not transaction_history_pruned,
     }
 
 

@@ -56,13 +56,17 @@ from gateway.rialo_anchor import (
     watch_batches,
 )
 from gateway.rialo_verify import (
+    DEFAULT_DEVICE_REGISTRARS,
     RialoRpcClient,
+    RialoRpcNotFoundError,
+    RialoVerificationError,
     compare_batch_to_state,
     decode_account_state,
     decode_workflow_state,
     extract_workflow_address,
     extract_fee_payer,
     save_receipt,
+    verify_registration_receipt,
 )
 
 
@@ -655,6 +659,87 @@ class RialoAnchoringTests(unittest.TestCase):
         self.assertEqual(saved_workflow, workflow)
         self.assertEqual(receipt["status"], "RIALO_DEVICE_REGISTERED")
         self.assertEqual(receipt["registrar"], "PAYER")
+
+    def test_pruned_registration_transaction_uses_trusted_receipt_and_live_workflow(self) -> None:
+        workflow = "2zFvYcDgb4US6RHcPhvTVAQTcTK8T9R6hf9iNLHANUsp"
+        fingerprint = self.batch["device_public_key_fingerprint"]
+        registrar = DEFAULT_DEVICE_REGISTRARS[1]
+        registration_values = [
+            value
+            for _, value in build_registration_arguments(
+                self.batch["device_id"], fingerprint
+            )
+        ]
+        raw_state = struct.pack("<13Q", 1, *registration_values, *([0] * 7))
+        account = {
+            "owner": self.program_id,
+            "data": [base64.b64encode(raw_state).decode("ascii"), "base64"],
+        }
+        receipt = {
+            "schema_version": 1,
+            "status": "RIALO_DEVICE_REGISTERED",
+            "device_id": self.batch["device_id"],
+            "public_key_fingerprint": fingerprint,
+            "program_id": self.program_id,
+            "transaction_signature": "PRUNEDTRANSACTION",
+            "workflow_address": workflow,
+            "workflow_slug": registration_workflow_slug(self.batch["device_id"]),
+            "registrar": registrar,
+        }
+
+        class FakeClient:
+            def get_transaction(inner_self, _signature: str) -> dict:
+                raise RialoRpcNotFoundError(
+                    "Rialo RPC request failed: HTTP Error 404: Not Found"
+                )
+
+            def get_account_info(inner_self, address: str) -> dict:
+                self.assertEqual(address, workflow)
+                return account
+
+        verified = verify_registration_receipt(
+            self.batch["device_id"],
+            fingerprint,
+            receipt,
+            FakeClient(),
+            expected_program_id=self.program_id,
+            expected_registrar=DEFAULT_DEVICE_REGISTRARS,
+        )
+        self.assertTrue(verified["transaction_history_pruned"])
+        self.assertFalse(verified["registrar_verified_from_transaction"])
+        self.assertEqual(verified["registrar"], registrar)
+        self.assertEqual(verified["workflow_address"], workflow)
+
+    def test_pruned_registration_transaction_still_rejects_untrusted_registrar(self) -> None:
+        fingerprint = self.batch["device_public_key_fingerprint"]
+        receipt = {
+            "schema_version": 1,
+            "status": "RIALO_DEVICE_REGISTERED",
+            "device_id": self.batch["device_id"],
+            "public_key_fingerprint": fingerprint,
+            "program_id": self.program_id,
+            "transaction_signature": "PRUNEDTRANSACTION",
+            "workflow_address": "WORKFLOW",
+            "workflow_slug": registration_workflow_slug(self.batch["device_id"]),
+            "registrar": "UNTRUSTED",
+        }
+
+        class FakeClient:
+            def get_transaction(inner_self, _signature: str) -> dict:
+                raise AssertionError("untrusted receipt must fail before RPC lookup")
+
+            def get_account_info(inner_self, _address: str) -> dict:
+                raise AssertionError("untrusted receipt must fail before RPC lookup")
+
+        with self.assertRaisesRegex(RialoVerificationError, "not trusted"):
+            verify_registration_receipt(
+                self.batch["device_id"],
+                fingerprint,
+                receipt,
+                FakeClient(),
+                expected_program_id=self.program_id,
+                expected_registrar=DEFAULT_DEVICE_REGISTRARS,
+            )
 
     def test_existing_final_receipt_is_detected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -130,6 +130,7 @@ const translations = {
     mismatchHeading: "✕ ОБНАРУЖЕНО НЕСООТВЕТСТВИЕ",
     incompleteHeading: "! ПРОВЕРКА НЕ ЗАВЕРШЕНА",
     verifiedMessage: "Проверка пройдена: подписи устройства, рассчитанный digest и состояние workflow в Rialo совпадают.",
+    verifiedPrunedRegistrationMessage: "Проверка батча пройдена. Registration workflow совпадает, но исходная транзакция регистрации уже удалена из RPC-истории; регистратор взят из ранее подтверждённой receipt.",
     tamperedMessage: "Архивные данные не совпадают с подписями устройства или исторической записью в Rialo.",
     invalidReceiptMessage: "Сохранённая Rialo receipt неполна или относится к другому батчу.",
     chainUnavailableMessage: "Локальная целостность подтверждена, но сейчас не удалось получить исторические данные из Rialo.",
@@ -138,6 +139,7 @@ const translations = {
     browserTransaction: "транзакция найдена в Rialo Devnet",
     browserWorkflow: "workflow содержит тот же digest",
     browserRegistration: "публичный ключ устройства зарегистрирован в Rialo",
+    browserRegistrationPruned: "registration workflow совпадает; исходная registration TX удалена из RPC-истории",
     archiveRecheck: "сервер архива повторно подтвердил proof",
     blockLabel: "Блок",
     recordedAtLabel: "записано",
@@ -276,6 +278,7 @@ const translations = {
     mismatchHeading: "✕ INTEGRITY MISMATCH DETECTED",
     incompleteHeading: "! VERIFICATION INCOMPLETE",
     verifiedMessage: "Verification passed: the device signatures, calculated digest, and historical Rialo workflow match.",
+    verifiedPrunedRegistrationMessage: "Batch verification passed. The registration workflow still matches, but the original registration transaction has been pruned from RPC history; the registrar identity comes from the previously verified receipt.",
     tamperedMessage: "The archived data does not match the device signatures or the historical Rialo workflow.",
     invalidReceiptMessage: "The stored Rialo receipt is incomplete or belongs to a different batch.",
     chainUnavailableMessage: "Local integrity is valid, but the historical Rialo state is currently unavailable.",
@@ -284,6 +287,7 @@ const translations = {
     browserTransaction: "transaction found on Rialo Devnet",
     browserWorkflow: "workflow contains the same digest",
     browserRegistration: "device public key is registered on Rialo",
+    browserRegistrationPruned: "registration workflow matches; the original registration transaction was pruned from RPC history",
     archiveRecheck: "archive server independently rechecked the proof",
     blockLabel: "Block",
     recordedAtLabel: "recorded",
@@ -605,7 +609,11 @@ function setResult(result) {
     CHAIN_UNAVAILABLE: t("chainUnavailableMessage"),
   };
   message.textContent = good
-    ? t("verifiedMessage")
+    ? (
+        result.registrationTransactionPruned
+          ? t("verifiedPrunedRegistrationMessage")
+          : t("verifiedMessage")
+      )
     : localizedMessages[result.status] || result.message;
   elements.detailResult.append(heading, message);
   if (Array.isArray(result.checks) && result.checks.length) {
@@ -641,7 +649,13 @@ function setProofFileResult(result) {
   if (good) {
     checks.push(`${result.signaturesVerified} ${t("browserSignatures")}`);
     checks.push(t("browserDigest"), t("browserTransaction"), t("browserWorkflow"));
-    if (result.deviceRegistrationVerified) checks.push(t("browserRegistration"));
+    if (result.deviceRegistrationVerified) {
+      checks.push(
+        result.registrationTransactionPruned
+          ? t("browserRegistrationPruned")
+          : t("browserRegistration"),
+      );
+    }
   } else if (result.message) {
     checks.push(`${t("failureReason")}: ${result.message}`);
   }
@@ -1145,7 +1159,13 @@ async function verifySelected() {
       t("browserTransaction"),
       t("browserWorkflow"),
     ];
-    if (browser.deviceRegistrationVerified) checks.push(t("browserRegistration"));
+    if (browser.deviceRegistrationVerified) {
+      checks.push(
+        browser.registrationTransactionPruned
+          ? t("browserRegistrationPruned")
+          : t("browserRegistration"),
+      );
+    }
     if (serverVerified) checks.push(t("archiveRecheck"));
     setResult({ ...browser, checks });
     return;

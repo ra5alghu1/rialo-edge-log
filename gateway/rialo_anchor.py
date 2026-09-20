@@ -21,6 +21,7 @@ from gateway.rialo_args import (
 )
 from gateway.rialo_cli import build_shell_invocation, shell_directory_expression
 from gateway.rialo_verify import (
+    DEFAULT_DEVICE_REGISTRARS,
     DEFAULT_RPC_URL,
     RialoRpcClient,
     RialoVerificationError,
@@ -499,6 +500,7 @@ def submit_device_registration(
                     receipt,
                     active_client,
                     expected_program_id=program_id,
+                    expected_registrar=DEFAULT_DEVICE_REGISTRARS,
                 )
             except RialoVerificationError as exc:
                 raise RialoAnchorError(
@@ -508,7 +510,14 @@ def submit_device_registration(
                 destination,
                 verified["transaction_signature"],
                 verified["workflow_address"],
-                "Device registration receipt already exists and is verified",
+                (
+                    "Device registration receipt already exists; "
+                    + (
+                        "live workflow verified, transaction history pruned"
+                        if verified.get("transaction_history_pruned")
+                        else "transaction and workflow verified"
+                    )
+                ),
             )
 
     signature = load_pending_registration(

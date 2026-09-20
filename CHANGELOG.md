@@ -34,6 +34,11 @@ Notable changes to Rialo Edge Log are recorded here as the project evolves.
 
 ### Fixed
 
+- Allowed a previously verified device registration to survive Devnet RPC
+  transaction-history pruning: an HTTP 404 for the original registration
+  transaction now falls back only to the allow-listed registrar recorded in
+  the receipt plus the still-live on-chain registration workflow. Other RPC
+  errors, untrusted registrars, and state mismatches remain blocking.
 - Stopped driving the NodeMCU built-in LED because it shares `GPIO2` with the
   physical DS18B20 one-wire bus.
 - Updated the Windows RPC-routing regression test after route construction was

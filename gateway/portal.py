@@ -493,9 +493,18 @@ class PortalStore:
                 "rialo_verified": False,
                 "device_registration_verified": False,
             }
+        registration_history_pruned = bool(
+            verified_registration.get("transaction_history_pruned")
+        )
         result.update(
             {
-                "message": "Device registration, signatures, batch proof and historical Rialo workflow all match.",
+                "message": (
+                    "Device registration workflow, signatures, batch proof and historical Rialo workflow all match. "
+                    "The original registration transaction is no longer available from RPC history; "
+                    "the registrar identity comes from the previously verified registration receipt."
+                    if registration_history_pruned
+                    else "Device registration, signatures, batch proof and historical Rialo workflow all match."
+                ),
                 "device_registration_verified": True,
                 "registration_transaction_signature": verified_registration[
                     "transaction_signature"
@@ -504,6 +513,10 @@ class PortalStore:
                     "workflow_address"
                 ],
                 "registration_registrar": verified_registration["registrar"],
+                "registration_transaction_history_pruned": registration_history_pruned,
+                "registration_registrar_verified_from_transaction": verified_registration[
+                    "registrar_verified_from_transaction"
+                ],
             }
         )
         return result

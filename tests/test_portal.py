@@ -21,6 +21,7 @@ from gateway.edge_gateway import (
     save_registry,
 )
 from gateway.portal import PortalStore, handler_factory
+from gateway.rialo_verify import RialoRpcNotFoundError
 from gateway.rialo_args import (
     build_arguments,
     build_registration_arguments,
@@ -224,6 +225,37 @@ class PortalTests(unittest.TestCase):
         self.assertTrue(result["device_registration_verified"])
         self.assertEqual(bundle["device"]["public_key_sec1"], self.public_key)
 
+    def test_pruned_registration_transaction_keeps_live_state_verifiable(self) -> None:
+        bundle = self.store.export_bundle(self.batch["batch_id"])
+        transaction_result = self.transaction_result
+        account = self.account
+        registration_account = self.registration_account
+
+        class PrunedRegistrationClient:
+            def get_transaction(inner_self, signature: str) -> dict:
+                if signature == "TRANSACTION789":
+                    return transaction_result
+                if signature == "REGISTRATIONTRANSACTION":
+                    raise RialoRpcNotFoundError(
+                        "Rialo RPC request failed: HTTP Error 404: Not Found"
+                    )
+                raise AssertionError("unexpected transaction")
+
+            def get_account_info(inner_self, address: str) -> dict:
+                if address == "WORKFLOW456":
+                    return account
+                if address == "REGISTRATIONWORKFLOW":
+                    return registration_account
+                raise AssertionError("unexpected workflow")
+
+        self.store.client_factory = lambda _url: PrunedRegistrationClient()
+        result = self.store.verify_bundle(bundle)
+        self.assertEqual(result["status"], "RIALO_VERIFIED")
+        self.assertTrue(result["device_registration_verified"])
+        self.assertTrue(result["registration_transaction_history_pruned"])
+        self.assertFalse(result["registration_registrar_verified_from_transaction"])
+        self.assertIn("previously verified registration receipt", result["message"])
+
     def test_changed_exported_bundle_is_detected(self) -> None:
         bundle = self.store.export_bundle(self.batch["batch_id"])
         bundle["batch"]["readings"][0]["temperature_c"] += 10.0
@@ -308,6 +340,15 @@ class PortalTests(unittest.TestCase):
             server.shutdown()
             server.server_close()
             thread.join(timeout=2)
+
+    def test_browser_verifier_reports_pruned_registration_history(self) -> None:
+        static_directory = Path(__file__).resolve().parent.parent / "portal"
+        verifier = (static_directory / "verifier.js").read_text(encoding="utf-8")
+        app = (static_directory / "app.js").read_text(encoding="utf-8")
+        self.assertIn('error && error.code === "RPC_NOT_FOUND"', verifier)
+        self.assertIn("registrationTransactionPruned", verifier)
+        self.assertIn("browserRegistrationPruned", app)
+        self.assertIn("verifiedPrunedRegistrationMessage", app)
 
     def test_portal_auto_refreshes_live_archive_data(self) -> None:
         static_directory = Path(__file__).resolve().parent.parent / "portal"

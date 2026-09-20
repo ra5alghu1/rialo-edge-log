@@ -143,7 +143,8 @@
       throw new VerificationError("CHAIN_UNAVAILABLE", `Independent Rialo RPC request failed: ${error.message}`);
     }
     if (!response.ok) {
-      throw new VerificationError("CHAIN_UNAVAILABLE", `Independent Rialo RPC returned HTTP ${response.status}`);
+      const code = response.status === 404 ? "RPC_NOT_FOUND" : "CHAIN_UNAVAILABLE";
+      throw new VerificationError(code, `Independent Rialo RPC returned HTTP ${response.status}`);
     }
     const payload = await response.json();
     if (payload.error) {
@@ -239,6 +240,16 @@
     }
   }
 
+  function verifyRegistrationAccountState(registration, batch, account) {
+    const state = decodeWorkflowAccount(account, registration.program_id);
+    assert(state.deviceId === deviceIdToU64(batch.device_id), "Registered on-chain device ID does not match");
+    assert(state.publicKeyFingerprint === batch.device_public_key_fingerprint, "Registered on-chain public key does not match");
+    assert(state.batchDigest === "00".repeat(32), "Device registration contains a batch digest");
+    assert(state.firstSequence === 0n, "Device registration first sequence is not zero");
+    assert(state.lastSequence === 0n, "Device registration last sequence is not zero");
+    assert(state.readingCount === 0n, "Device registration reading count is not zero");
+  }
+
   function verifyRegistrationState(registration, batch, transaction, account) {
     assert(
       transactionContainsWorkflow(
@@ -249,13 +260,7 @@
       "Registration transaction does not point to the claimed workflow",
     );
     assert(transactionFeePayer(transaction) === registration.registrar, "Device registrar does not match the registration transaction");
-    const state = decodeWorkflowAccount(account, registration.program_id);
-    assert(state.deviceId === deviceIdToU64(batch.device_id), "Registered on-chain device ID does not match");
-    assert(state.publicKeyFingerprint === batch.device_public_key_fingerprint, "Registered on-chain public key does not match");
-    assert(state.batchDigest === "00".repeat(32), "Device registration contains a batch digest");
-    assert(state.firstSequence === 0n, "Device registration first sequence is not zero");
-    assert(state.lastSequence === 0n, "Device registration last sequence is not zero");
-    assert(state.readingCount === 0n, "Device registration reading count is not zero");
+    verifyRegistrationAccountState(registration, batch, account);
   }
 
   function transactionMetadata(transactionResult) {
@@ -306,10 +311,6 @@
     assert(localDigest === batch.proof.digest, "Recalculated SHA-256 digest does not match the archive");
 
     const rpcCall = options.rpcCall || ((method, params) => defaultRpcCall(method, params, options.rpcUrl));
-    const requests = [
-      rpcCall("getTransaction", [{ signature: receipt.transaction_signature }]),
-      rpcCall("getAccountInfo", [{ address: receipt.workflow_address, encoding: "base64" }]),
-    ];
     const registration = bundle.schema_version === 2
       ? bundle.device_registration
       : null;
@@ -320,12 +321,12 @@
         receipt,
         options.expectedRegistrars || options.expectedRegistrar || DEFAULT_DEVICE_REGISTRARS,
       );
-      requests.push(
-        rpcCall("getTransaction", [{ signature: registration.transaction_signature }]),
-        rpcCall("getAccountInfo", [{ address: registration.workflow_address, encoding: "base64" }]),
-      );
     }
-    const [transaction, account, registrationTransaction, registrationAccount] = await Promise.all(requests);
+
+    const [transaction, account] = await Promise.all([
+      rpcCall("getTransaction", [{ signature: receipt.transaction_signature }]),
+      rpcCall("getAccountInfo", [{ address: receipt.workflow_address, encoding: "base64" }]),
+    ]);
     assert(transactionContainsWorkflow(transaction, receipt.program_id, receipt.workflow_address), "Transaction does not point to the claimed Rialo workflow");
     const workflow = decodeWorkflowAccount(account, receipt.program_id);
     assert(workflow.deviceId === deviceIdToU64(batch.device_id), "On-chain device ID does not match");
@@ -335,13 +336,35 @@
     assert(workflow.lastSequence === BigInt(batch.last_sequence), "On-chain last sequence does not match");
     assert(workflow.readingCount === BigInt(batch.reading_count), "On-chain reading count does not match");
 
+    let registrationTransactionPruned = false;
     if (registration) {
-      verifyRegistrationState(
-        registration,
-        batch,
-        registrationTransaction,
-        registrationAccount,
+      const registrationAccount = await rpcCall(
+        "getAccountInfo",
+        [{ address: registration.workflow_address, encoding: "base64" }],
       );
+      let registrationTransaction = null;
+      try {
+        registrationTransaction = await rpcCall(
+          "getTransaction",
+          [{ signature: registration.transaction_signature }],
+        );
+      } catch (error) {
+        if (error && error.code === "RPC_NOT_FOUND") {
+          registrationTransactionPruned = true;
+        } else {
+          throw error;
+        }
+      }
+      if (registrationTransactionPruned) {
+        verifyRegistrationAccountState(registration, batch, registrationAccount);
+      } else {
+        verifyRegistrationState(
+          registration,
+          batch,
+          registrationTransaction,
+          registrationAccount,
+        );
+      }
     }
 
     return {
@@ -360,6 +383,8 @@
         ? registration.workflow_address
         : null,
       registrationRegistrar: registration ? registration.registrar : null,
+      registrationTransactionPruned,
+      registrationRegistrarVerifiedFromTransaction: Boolean(registration) && !registrationTransactionPruned,
       rpcUrl: options.rpcUrl || DEFAULT_RPC_URL,
       ...transactionMetadata(transaction),
     };
