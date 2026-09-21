@@ -6,6 +6,11 @@ Notable changes to Rialo Edge Log are recorded here as the project evolves.
 
 ### Added
 
+- Added an Ubuntu edge operational healthcheck that detects stalled anchoring
+  even when systemd still reports the worker as running. It checks service
+  state, heartbeat/receipt/publication freshness, current queue depth, RLO
+  balance, the Venus program, and live device-registration workflows, with
+  text or JSON output suitable for monitoring.
 - Completed the Ubuntu physical-sensor migration on September 15, 2026 with
   device `edge-77BD19`: signed DS18B20 telemetry, automatic Rialo anchoring,
   archive publication, live heartbeats, browser verification, and `systemd`

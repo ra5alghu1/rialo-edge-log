@@ -85,6 +85,26 @@ systemctl --no-pager --full status \
 journalctl -u 'rialo-edge-*' --since today --no-pager
 ```
 
+A running systemd process does not prove that the complete telemetry pipeline is
+making progress. Run the operational healthcheck as the service account:
+
+```bash
+sudo -u rialo-edge -H bash -lc '
+cd /opt/rialo-edge-log
+/opt/rialo-edge-log/.venv/bin/python -m gateway.healthcheck
+'
+```
+
+The command checks the four core services, heartbeat freshness, latest Rialo
+receipt, new unanchored backlog since the last successful anchor, archive
+publication freshness and queue, RLO balance, the current Venus program, and
+all saved device registration workflows. It returns exit code `0` for
+`HEALTHY`, `1` for `DEGRADED`, and `2` for `FAILED`.
+
+For monitoring integrations, add `--json`. Historical gaps older than the
+latest successful anchor are deliberately ignored, so a recovery point does not
+leave the deployment permanently unhealthy.
+
 The former Windows device remains historical evidence. No telemetry continuity
 is claimed for the period when that host was offline.
 
