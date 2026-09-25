@@ -1,7 +1,7 @@
 (function attachRialoVerifier(global) {
   "use strict";
 
-  const DEFAULT_RPC_URL = "https://devnet.rialoscan.org/api/rpc";
+  const DEFAULT_RPC_URL = "/api/rpc";
   const DEFAULT_DEVICE_REGISTRARS = Object.freeze([
     "BBjJpGwN3aV3BrMPw6BCZHZue8btcqTTfXouG9Nv9Sz6",
     "2bmtDvEfj4wkp1cXjJqoFJbTEpRtbyhQ8aSeyM4bNHaf",

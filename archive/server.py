@@ -19,6 +19,8 @@ from pathlib import Path
 from typing import Any, Callable, Iterator, Sequence
 from urllib.parse import unquote, urlparse
 
+from archive.rpc_proxy import MAX_REQUEST_BYTES, ProxyUnavailable, forward_read
+
 from gateway.edge_gateway import (
     SIGNED_SCHEMA_VERSIONS,
     parse_telemetry_line,
@@ -703,6 +705,22 @@ class ArchiveHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         path = urlparse(self.path).path
         try:
+            if path == "/api/rpc":
+                self.connection.settimeout(10)
+                try:
+                    if self.headers.get("Transfer-Encoding"):
+                        raise ValueError("transfer encoding is not supported")
+                    length = int(self.headers.get("Content-Length", "0"))
+                    if not 0 < length <= MAX_REQUEST_BYTES:
+                        raise ValueError("RPC request must be between 1 and 4096 bytes")
+                    value = json.loads(self.rfile.read(length).decode("utf-8"))
+                    self._send_json(forward_read(value, self.store.rpc_url))
+                except ProxyUnavailable as exc:
+                    self._send_json({"error": str(exc)}, HTTPStatus.SERVICE_UNAVAILABLE)
+                except (ValueError, UnicodeDecodeError, OSError):
+                    self.close_connection = True
+                    self._send_json({"error": "invalid proof RPC request"}, HTTPStatus.BAD_REQUEST)
+                return
             if path == "/api/ingest":
                 authorization = self.headers.get("Authorization", "")
                 expected = f"Bearer {self.ingest_token}"

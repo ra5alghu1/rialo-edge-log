@@ -146,3 +146,17 @@ remain useful as local history but cannot prove current on-chain availability.
 This is an independent open-source experiment on Rialo Devnet. It is not
 affiliated with or endorsed by Rialo Labs or Subzero Labs and is not official
 Rialo software.
+
+### Browser proof RPC transport
+
+The browser verifier uses the archive's same-origin `/api/rpc` endpoint by default.
+It forwards only `getTransaction` and base64 `getAccountInfo` to the archive's
+configured Rialo RPC, without submitting transactions. Requests are limited to
+4 KB, responses to 2 MB, upstream calls to eight seconds and four concurrent calls.
+Batch requests, extra parameters, caller-selected URLs and redirects are rejected.
+
+Signatures and digests are still checked in the browser. Chain responses now travel
+through the archive operator's server, so this default transport is not independent
+of that operator. Independent operators can use `verifyProofBundle` with a trusted
+`rpcUrl` or `rpcCall`. RialoScan links remain optional explorer links; its availability
+is no longer required for browser proof verification.

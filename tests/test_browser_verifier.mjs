@@ -271,3 +271,21 @@ test("browser rejects an invalid proof file", () => {
     (error) => error.code === "INVALID_RECEIPT",
   );
 });
+
+test("default verification uses the same-origin read-only RPC", async () => {
+  const { bundle, rpcCall } = await fixture();
+  const originalFetch = globalThis.fetch;
+  const urls = [];
+  globalThis.fetch = async (url, options) => {
+    urls.push(url);
+    const request = JSON.parse(options.body);
+    return { ok: true, json: async () => ({ result: await rpcCall(request.method, request.params) }) };
+  };
+  try {
+    await verifier.verifyProofBundle(bundle, { expectedRegistrar: "PAYER" });
+    assert.ok(urls.length >= 2);
+    assert.ok(urls.every((url) => url === "/api/rpc"));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
