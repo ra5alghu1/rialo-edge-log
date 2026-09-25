@@ -307,7 +307,7 @@ class PortalTests(unittest.TestCase):
             self.assertIn('rel="icon" href="/favicon.svg"', html)
             self.assertIn('rel="manifest" href="/site.webmanifest"', html)
             self.assertIn('/verifier.js', html)
-            self.assertIn('href="https://github.com/robotek8/rialo-edge-log"', html)
+            self.assertIn('href="https://github.com/ra5alghu1/rialo-edge-log"', html)
             self.assertIn('href="https://x.com/ra5alghul"', html)
             self.assertIn('href="https://t.me/Ras_a1_Ghu1"', html)
             self.assertIn('property="og:image" content="https://rialo-edge-log.xyz/og-image.png?v=3"', html)

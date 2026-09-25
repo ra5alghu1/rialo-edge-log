@@ -15,7 +15,7 @@ or start anything before configuration is reviewed.
 ```bash
 sudo apt update
 sudo apt install -y git python3 python3-venv openssh-client
-sudo git clone https://github.com/robotek8/rialo-edge-log.git /opt/rialo-edge-log
+sudo git clone https://github.com/ra5alghu1/rialo-edge-log.git /opt/rialo-edge-log
 cd /opt/rialo-edge-log
 sudo ./deploy/linux-edge/install.sh
 ```
