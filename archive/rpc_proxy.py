@@ -49,7 +49,7 @@ def forward_read(value, rpc_url):
     try:
         request = Request(rpc_url, data=json.dumps(value).encode(),
                           headers={'Content-Type': 'application/json'})
-        with build_opener(NoRedirect()).open(request, timeout=8) as response:
+        with build_opener(NoRedirect()).open(request, timeout=30) as response:
             raw = response.read(MAX_RESPONSE_BYTES + 1)
         if len(raw) > MAX_RESPONSE_BYTES:
             raise ValueError('response too large')

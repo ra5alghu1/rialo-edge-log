@@ -33,7 +33,7 @@ class ProxyTests(unittest.TestCase):
                 if succeeds:
                     self.assertIsNone(forward_read(request(),'https://rpc.example')['result'])
                     args=opener.return_value.open.call_args
-                    self.assertEqual(args.kwargs['timeout'],8)
+                    self.assertEqual(args.kwargs['timeout'],30)
                     self.assertEqual(args.args[0].full_url,'https://rpc.example')
                 else:
                     with self.assertRaises(ProxyUnavailable): forward_read(request(),'https://rpc.example')

@@ -152,7 +152,7 @@ Rialo software.
 The browser verifier uses the archive's same-origin `/api/rpc` endpoint by default.
 It forwards only `getTransaction` and base64 `getAccountInfo` to the archive's
 configured Rialo RPC, without submitting transactions. Requests are limited to
-4 KB, responses to 2 MB, upstream calls to eight seconds and four concurrent calls.
+4 KB, responses to 2 MB, upstream calls to 30 seconds and four concurrent calls.
 Batch requests, extra parameters, caller-selected URLs and redirects are rejected.
 
 Signatures and digests are still checked in the browser. Chain responses now travel
