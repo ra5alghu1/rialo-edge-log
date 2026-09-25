@@ -77,3 +77,10 @@ class ProxyTests(unittest.TestCase):
                     opener.assert_not_called()
             finally:
                 server.shutdown(); server.server_close(); thread.join()
+
+    def test_pruned_transaction_preserves_not_found(self):
+        from urllib.error import HTTPError
+        from archive.rpc_proxy import ProxyNotFound
+        with patch('archive.rpc_proxy.build_opener') as opener:
+            opener.return_value.open.side_effect = HTTPError('https://rpc.example',404,'Not Found',{},None)
+            with self.assertRaises(ProxyNotFound): forward_read(request(),'https://rpc.example')

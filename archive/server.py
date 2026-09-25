@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterator, Sequence
 from urllib.parse import unquote, urlparse
 
-from archive.rpc_proxy import MAX_REQUEST_BYTES, ProxyUnavailable, forward_read
+from archive.rpc_proxy import MAX_REQUEST_BYTES, ProxyNotFound, ProxyUnavailable, forward_read
 
 from gateway.edge_gateway import (
     SIGNED_SCHEMA_VERSIONS,
@@ -715,6 +715,8 @@ class ArchiveHandler(BaseHTTPRequestHandler):
                         raise ValueError("RPC request must be between 1 and 4096 bytes")
                     value = json.loads(self.rfile.read(length).decode("utf-8"))
                     self._send_json(forward_read(value, self.store.rpc_url))
+                except ProxyNotFound as exc:
+                    self._send_json({"error": str(exc)}, HTTPStatus.NOT_FOUND)
                 except ProxyUnavailable as exc:
                     self._send_json({"error": str(exc)}, HTTPStatus.SERVICE_UNAVAILABLE)
                 except (ValueError, UnicodeDecodeError, OSError):

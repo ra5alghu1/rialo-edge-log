@@ -2,6 +2,7 @@
 import json
 import re
 import threading
+from urllib.error import HTTPError
 from urllib.request import Request, build_opener, HTTPRedirectHandler
 
 MAX_REQUEST_BYTES = 4096
@@ -10,6 +11,10 @@ _SLOTS = threading.BoundedSemaphore(4)
 
 
 class ProxyUnavailable(RuntimeError):
+    pass
+
+
+class ProxyNotFound(ProxyUnavailable):
     pass
 
 
@@ -59,6 +64,10 @@ def forward_read(value, rpc_url):
         if ('result' in payload) == ('error' in payload):
             raise ValueError('invalid RPC result')
         return payload
+    except HTTPError as exc:
+        if exc.code == 404:
+            raise ProxyNotFound('Rialo RPC record was not found') from exc
+        raise ProxyUnavailable('Rialo proof RPC is temporarily unavailable') from exc
     except Exception as exc:
         raise ProxyUnavailable('Rialo proof RPC is temporarily unavailable') from exc
     finally:
