@@ -1,66 +1,41 @@
 # Contributing
 
-Thanks for taking an interest in Rialo Edge Log.
+Small, focused changes are welcome.
 
-The project is intentionally small and focused: signed physical telemetry,
-deterministic batching, on-chain commitments, and independent browser
-verification.
+Good targets are docs, tests, reliability fixes, proof inspection, and making
+the edge setup easier to run on another ESP8266/Linux host.
 
-## Good contribution areas
+Please avoid large rewrites unless they solve a concrete problem.
 
-Useful contributions include:
+Before opening a PR:
 
-- clearer setup or troubleshooting documentation;
-- tests for gateway, archive, verifier, or firmware behavior;
-- small reliability fixes;
-- improvements to proof inspection and traceability;
-- portability improvements for other ESP8266 or Linux edge setups.
+1. keep the change focused;
+2. do not commit keys, wallets, Wi-Fi credentials, tokens or private telemetry;
+3. run the tests that touch your change.
 
-Please avoid unrelated framework rewrites or large feature additions unless
-there is a clear problem they solve.
-
-## Before opening a pull request
-
-1. Fork the repository and create a focused branch.
-2. Keep the change as small as practical.
-3. Do not commit secrets, device keys, wallet files, Wi-Fi credentials,
-   tokens, or generated private telemetry.
-4. Run the relevant tests.
-
-Python tests:
+Python:
 
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-Browser verifier and CSV tests:
+Browser verifier / CSV:
 
 ```bash
 node --test tests/test_browser_verifier.mjs tests/test_csv.mjs
 ```
 
-For firmware changes, make sure the physical-sensor sketch still compiles for
-the NodeMCU target.
+For firmware changes, make sure the NodeMCU sketch still compiles.
 
-## Pull requests
+A PR description only needs to answer three things:
 
-A good pull request should explain:
-
-- what problem it fixes or improves;
+- what was wrong or missing;
 - what changed;
-- how it was tested;
-- whether it changes the proof model, trust boundary, or deployment behavior.
+- how you tested it.
 
-If a change affects verification or security assumptions, please update the
-relevant documentation in the same pull request.
+If the change touches signatures, device identity, digest generation or proof
+verification, also mention whether the trust model changed.
 
-## Proof model
-
-Please preserve the project's core distinction:
-
-Rialo Edge Log can prove that archived telemetry matches data signed by the
-registered device key and committed on-chain. It does not prove that a physical
-sensor was calibrated correctly, installed correctly, or uncompromised before
-signing.
-
-That boundary should remain explicit in code, UI, and documentation.
+One project rule matters more than the rest: this system proves that archived
+data matches what the registered device signed and what was committed on-chain.
+It does not prove that the physical sensor was correct before signing.

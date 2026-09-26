@@ -7,23 +7,22 @@
 
 **Tamper-evident IoT telemetry with an ESP8266.**
 
-Rialo Edge Log is a small open-source experiment for making later changes to IoT telemetry detectable.
+Rialo Edge Log records real DS18B20 temperature readings, signs them on an
+ESP8266, groups them into batches on an Ubuntu edge host, and anchors each batch
+digest on Rialo Devnet.
 
-A physical DS18B20 sensor produces temperature readings that are signed directly on an ESP8266, verified on an Ubuntu edge host, grouped into deterministic batches, and anchored on Rialo Devnet.
-
-The raw telemetry stays off-chain.
+The readings themselves stay off-chain.
 
 [**Open the live deployment →**](https://rialo-edge-log.xyz)
 
 ![Rialo Edge Log](portal/og-image.png)
 
----
+## Why I built it
 
-## Why this exists
+If telemetry is stored on a normal server, you usually have to trust that the
+stored history was not edited later.
 
-Typical IoT telemetry asks you to trust the server that stores the measurements.
-
-Rialo Edge Log uses a different model:
+This project adds a simple verification path:
 
 ```text
 Physical sensor
@@ -38,48 +37,36 @@ SHA-256 batch digest is anchored on Rialo
       ↓
 Public archive
       ↓
-Browser independently verifies the proof
+Browser verifies the proof
 ```
 
-The blockchain does **not** store the raw sensor data.
+Rialo stores the batch commitment, not the raw telemetry. If somebody changes
+an archived value later, the batch no longer matches the on-chain digest.
 
-It stores a small cryptographic commitment that lets anyone detect whether an archived batch was changed after publication.
+## What the proof checks
 
----
+For a published batch, the verifier checks:
 
-## What can be verified?
+- device signatures;
+- the registered device public key;
+- the deterministic batch digest;
+- Rialo workflow state;
+- the anchoring transaction;
+- the archive contents being shown to the user.
 
-For every published batch, the verifier can check:
+Change an archived temperature value and verification fails.
 
-- ✅ the reading signatures
-- ✅ the registered device public key
-- ✅ the deterministic batch digest
-- ✅ the Rialo workflow state
-- ✅ the anchoring transaction
-- ✅ the published archive contents
+### What it does not prove
 
-If an archived temperature value is changed after publication, verification fails.
+This does not prove that the sensor was calibrated correctly, installed in the
+right place, or uncompromised before signing.
 
-### What this does **not** prove
-
-The project does not claim that blockchain makes a sensor truthful.
-
-It cannot prove that:
-
-- the sensor was calibrated correctly;
-- the probe was installed where claimed;
-- the hardware was uncompromised before signing;
-- the physical environment matched the digital measurement.
-
-The proof starts at the device signature.
-
-That boundary is intentional.
-
----
+The proof starts at the device signature. It proves integrity from that point
+forward, not physical truth.
 
 ## Live deployment
 
-The current deployment uses real hardware rather than simulated telemetry.
+The current setup uses a real sensor, not simulated telemetry.
 
 ```text
 DS18B20
@@ -91,23 +78,14 @@ Ubuntu edge host
 Rialo Devnet
 ```
 
-Current device:
+Current device: `edge-77BD19`
 
-```text
-edge-77BD19
-```
+Sensor: `DS18B20 on D4 / GPIO2`
 
-Current sensor:
+The Ubuntu host runs the gateway, anchor, publisher and balance guard as
+`systemd` services.
 
-```text
-DS18B20 on D4 / GPIO2
-```
-
-The Ubuntu host runs the gateway, anchor, publisher and balance guard as `systemd` services.
-
-[**Browse real published batches →**](https://rialo-edge-log.xyz)
-
----
+[**Browse published batches →**](https://rialo-edge-log.xyz)
 
 ## Architecture
 
@@ -115,196 +93,139 @@ The Ubuntu host runs the gateway, anchor, publisher and balance guard as `system
 
 Editable Mermaid source: [`docs/architecture.mmd`](docs/architecture.mmd)
 
-At a high level:
+The main path is:
 
-1. The ESP8266 reads the DS18B20.
-2. The reading is signed using the device's ECDSA P-256 key.
+1. ESP8266 reads the DS18B20.
+2. The device signs the reading with its ECDSA P-256 key.
 3. The Ubuntu gateway verifies the signature.
-4. Multiple readings are grouped into a deterministic batch.
-5. A SHA-256 digest of the batch is produced.
-6. The digest is recorded in a Rialo Venus workflow.
+4. Readings are grouped into a deterministic batch.
+5. The batch gets a SHA-256 digest.
+6. The digest is written to a Rialo Venus workflow.
 7. The confirmed batch and proof metadata are published to the archive.
-8. The browser recalculates the digest and checks the relevant chain records.
+8. The browser recalculates the digest and reads the matching chain records.
 
-Private device keys, wallet files and archive ingestion credentials never leave the edge host.
+Private device keys, wallet files and archive ingestion credentials stay on the
+edge host.
 
----
+## Try it
 
-## Try the proof
-
-Open:
-
-**https://rialo-edge-log.xyz**
-
-Choose a device, open a published batch, and run verification.
-
-The browser checks the original readings, signatures, registered device identity, batch digest and corresponding Rialo records.
+Open **https://rialo-edge-log.xyz**, choose a device, open a batch and run
+verification.
 
 No wallet connection is required to inspect an existing proof.
 
----
-
-## Project components
+## Repository map
 
 | Component | Role |
 |---|---|
 | `firmware/nodemcu_signed` | DS18B20 collection and device-side signing |
-| `gateway` | serial ingestion, validation, batching and anchoring |
+| `gateway` | serial ingest, verification, batching and anchoring |
 | `rialo/edge-log-proof` | Rialo Venus workflow |
 | `archive` | public archive and API |
-| `portal` | RU/EN browser UI and proof verifier |
+| `portal` | RU/EN browser UI and verifier |
 | `deploy/linux-edge` | Ubuntu edge deployment |
 | `deploy/vps-docker` | public archive deployment |
 
----
+## Current state
 
-## Current project state
+The live deployment currently has:
 
-The current deployment includes:
-
-- a physical DS18B20 connected to an ESP8266 NodeMCU;
-- ECDSA P-256 signatures on device readings;
-- deterministic batching on the Ubuntu edge host;
-- one-time on-chain registration of the device ID and public-key fingerprint;
-- SHA-256 batch commitments anchored on Rialo Devnet;
+- a physical DS18B20 on an ESP8266 NodeMCU;
+- ECDSA P-256 signatures on readings;
+- deterministic batching on Ubuntu;
+- one-time on-chain device registration;
+- SHA-256 batch commitments on Rialo Devnet;
 - a public HTTPS archive;
-- browser-based independent verification;
-- one-minute signed heartbeats for device presence;
-- schema-3 boot-session, reset-reason and optional tamper telemetry;
-- CSV export for analysis;
-- proof JSON export for independent verification;
-- `systemd` supervision on the edge host;
+- browser verification;
+- signed one-minute heartbeats;
+- schema-3 boot-session, reset-reason and optional tamper fields;
+- CSV export;
+- proof JSON export;
+- `systemd` supervision;
 - Docker deployment for the public archive.
 
-The current Venus program ID is:
+Current Venus program ID:
 
 [`GVJpRi8SVURsjKbLC84Azk24vV2cK3ib74aXRk5hdatF`](https://devnet.rialoscan.org/address/GVJpRi8SVURsjKbLC84Azk24vV2cK3ib74aXRk5hdatF)
 
-Current confirmed transactions and workflows are shown in the [live archive](https://rialo-edge-log.xyz).
+Current transactions and workflows are shown in the
+[live archive](https://rialo-edge-log.xyz).
 
-Fixed transaction examples are intentionally not kept in this README because Rialo Devnet can reset.
-
----
+I do not keep fixed transaction examples here because Rialo Devnet can reset.
 
 ## Device identity
 
-The project currently documents two registrar identities:
+The project has two documented registrar identities:
 
-- historical Windows registrar:  
-  `BBjJpGwN3aV3BrMPw6BCZHZue8btcqTTfXouG9Nv9Sz6`
-- active Ubuntu registrar:  
-  `2bmtDvEfj4wkp1cXjJqoFJbTEpRtbyhQ8aSeyM4bNHaf`
+- historical Windows registrar: `BBjJpGwN3aV3BrMPw6BCZHZue8btcqTTfXouG9Nv9Sz6`
+- active Ubuntu registrar: `2bmtDvEfj4wkp1cXjJqoFJbTEpRtbyhQ8aSeyM4bNHaf`
 
-The historical identity remains relevant to already published prototype history.
-
-New Ubuntu device registrations use the active registrar.
-
----
+The Windows registrar stays in the trust list for old proof history. New Ubuntu
+registrations use the active registrar.
 
 ## Hardware history
 
 ![NodeMCU V3 used by Rialo Edge Log](docs/hardware/nodemcu-v3-prototype.jpg)
 
-The first version of the project used a NodeMCU V3 and simulated readings.
+The first version used a NodeMCU V3 with simulated readings. I kept that history
+in the repo instead of pretending it was always a physical-sensor project.
 
-That deployment is retained as documented prototype history.
-
-The current deployment uses a different ESP8266 NodeMCU with USB-C and a physical DS18B20 connected to `D4/GPIO2`.
-
-The historical device identity was not silently reused or re-keyed during the migration.
-
----
+The current deployment uses a different ESP8266 NodeMCU with USB-C and a
+physical DS18B20 on `D4/GPIO2`. The old device identity was not reused.
 
 ## Deployment history
 
-The original Windows prototype produced signed simulated telemetry until the edge host was taken offline on **September 9, 2026**.
+The Windows prototype stopped on **September 9, 2026**.
 
-The second deployment moved the edge stack to Ubuntu and switched to a physical DS18B20 sensor.
+The Ubuntu deployment switched to the physical DS18B20 and was checked
+end-to-end on **September 15, 2026**: signing, batching, registration, anchoring,
+publication, heartbeats, browser verification and `systemd` restart behavior.
 
-The Ubuntu deployment was validated end-to-end on **September 15, 2026**:
+There is no claimed telemetry continuity for the period when the edge host was
+offline.
 
-- signed telemetry;
-- local batching;
-- device registration;
-- Rialo anchoring;
-- archive publication;
-- live heartbeats;
-- browser verification;
-- automatic `systemd` restart.
+## Verification details
 
-No continuity is claimed for the period when the edge device was offline.
-
----
-
-## Verification model
-
-The proof shows that a published batch matches:
+A valid published batch must match:
 
 1. readings signed by the registered device key;
-2. the deterministic batch digest;
-3. the digest recorded on Rialo;
-4. the public archive payload presented to the verifier.
+2. the locally calculated batch digest;
+3. the digest stored on Rialo;
+4. the archive payload being verified.
 
-Schema-3 readings also bind:
+Schema-3 readings also include the device boot session, ESP8266 reset reason and
+optional enclosure-tamper state.
 
-- device boot session;
-- ESP8266 reset reason;
-- optional enclosure-tamper state.
+Heartbeat data is treated as operational metadata. The archive accepts a
+heartbeat only after verifying its latest reading and matching the key to an
+already published device.
 
-Heartbeat delivery is operational metadata. The archive accepts it only after verifying the latest reading and matching the key to a previously published device.
+## Browser RPC path
 
----
+The browser verifier uses the archive's same-origin `/api/rpc` endpoint by
+default.
 
-## Browser proof transport
-
-The default browser verifier uses the archive's same-origin `/api/rpc` endpoint.
-
-That endpoint forwards only the read-only RPC calls needed by the verifier and does not submit transactions.
-
-Current protections include:
-
-- only `getTransaction`;
-- base64 `getAccountInfo`;
-- request size limit;
-- response size limit;
-- upstream timeout;
-- concurrency limit;
-- no caller-selected upstream URL;
-- no redirects;
-- no batch requests.
+That proxy only forwards the read-only calls used by the verifier. It does not
+submit transactions. It also rejects caller-selected upstream URLs, redirects,
+batch requests and oversized requests/responses.
 
 Signatures and digests are still checked in the browser.
 
-Because chain responses travel through the archive operator's server in the default setup, this transport is not fully independent of the archive operator.
-
-Independent operators can call `verifyProofBundle` with their own trusted `rpcUrl` or `rpcCall`.
-
----
+The tradeoff is that the default RPC transport goes through the archive
+operator. If you want a fully separate RPC path, `verifyProofBundle` accepts a
+trusted `rpcUrl` or `rpcCall`.
 
 ## Exporting readings
 
-Open a batch in the portal and choose **Download readings CSV**.
+The portal can export the selected batch as CSV. The CSV includes temperature,
+sequence, uptime and the available boot/tamper fields.
 
-The CSV contains readings in archive order, including:
-
-- temperature;
-- sequence;
-- uptime;
-- available boot fields;
-- available tamper fields;
-- receipt-time metadata.
-
-CSV export is intended for analysis, not signature verification.
-
-Use the separate proof JSON download for cryptographic verification.
-
----
+CSV is for analysis. Use the proof JSON when you want to verify the original
+records.
 
 ## Run it yourself
 
-The repository contains setup notes for each layer.
-
-Start here for the current physical edge deployment:
+For the current physical edge setup, start here:
 
 [`deploy/linux-edge/README.md`](deploy/linux-edge/README.md)
 
@@ -315,40 +236,29 @@ Other useful entry points:
 - [`portal`](portal)
 - [`rialo/edge-log-proof`](rialo/edge-log-proof)
 
----
-
 ## Security notes
 
-Do not commit:
+Do not commit Wi-Fi passwords, private device keys, wallet files, archive
+ingestion tokens or private telemetry.
 
-- Wi-Fi passwords;
-- private device keys;
-- wallet files;
-- archive ingestion tokens;
-- generated private telemetry.
+Rialo Devnet can reset. Old receipts are still useful as local history, but they
+do not prove that the same chain state still exists after a reset.
 
-Rialo Devnet can reset without notice.
+## Next
 
-Receipts from an earlier network state remain useful as local history, but they do not prove current on-chain availability after a network reset.
+The project already does what I originally wanted it to do, so most new work is
+around reliability and usability rather than adding more features.
 
----
+Things I may still improve:
 
-## Next steps
-
-The project is functionally complete enough for continuous use. Current work is focused more on reliability and presentation than adding features.
-
-Possible next improvements:
-
-- make workflow identifiers easier to trace across long-running deployments;
-- add an automated end-to-end regression for physical collection through browser verification;
-- simplify public proof navigation further;
-- replace temporary RPC routing when Rialo exposes a universally reachable HTTPS endpoint;
-- evaluate a lower anchoring frequency for longer unattended runs.
-
----
+- easier tracing of workflow IDs in long-running deployments;
+- an end-to-end regression from physical reading to browser verification;
+- simpler proof navigation;
+- removing the temporary RPC routing once Rialo has a generally reachable HTTPS endpoint;
+- testing a lower anchoring frequency for longer unattended runs.
 
 ## Status
 
-This is an independent open-source experiment on Rialo Devnet.
+Independent open-source experiment on Rialo Devnet.
 
-It is not affiliated with or endorsed by Rialo Labs or Subzero Labs and is not official Rialo software.
+Not affiliated with or endorsed by Rialo Labs or Subzero Labs.
