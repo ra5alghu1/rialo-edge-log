@@ -1,5 +1,10 @@
 # Rialo Edge Log
 
+[![CI](https://github.com/ra5alghu1/rialo-edge-log/actions/workflows/tests.yml/badge.svg)](https://github.com/ra5alghu1/rialo-edge-log/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![ESP8266](https://img.shields.io/badge/ESP8266-physical%20sensor-lightgrey)
+![Rialo Devnet](https://img.shields.io/badge/Rialo-Devnet-lightgrey)
+
 **Tamper-evident IoT telemetry with an ESP8266.**
 
 Rialo Edge Log is a small open-source experiment for making later changes to IoT telemetry detectable.
