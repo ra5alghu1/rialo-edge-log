@@ -160,3 +160,15 @@ through the archive operator's server, so this default transport is not independ
 of that operator. Independent operators can use `verifyProofBundle` with a trusted
 `rpcUrl` or `rpcCall`. RialoScan links remain optional explorer links; its availability
 is no longer required for browser proof verification.
+
+## Export readings
+
+Open a batch in the portal and choose **Download readings CSV**. The file
+contains that batch's readings in archive order, including temperature,
+sequence, uptime, and any available boot, tamper, and receipt-time fields.
+Missing fields stay empty; receipt time is not a device measurement timestamp.
+
+CSV is for analysis in a spreadsheet, not signature verification. Use the
+separate proof JSON download to verify the original records. Text that could
+be interpreted as a spreadsheet formula is prefixed with an apostrophe in
+CSV; the archive and proof JSON are unchanged.

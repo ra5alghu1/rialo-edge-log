@@ -47,7 +47,7 @@ jobs:
         run: node --check portal/app.js
 
       - name: Test the independent browser verifier
-        run: node --test tests/test_browser_verifier.mjs
+        run: node --test tests/test_browser_verifier.mjs tests/test_csv.mjs
 
   firmware:
     runs-on: ubuntu-latest

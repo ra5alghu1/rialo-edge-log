@@ -6,6 +6,9 @@ Notable changes to Rialo Edge Log are recorded here as the project evolves.
 
 ### Added
 
+- Download the selected batch’s readings as CSV from the portal, with
+  spreadsheet-safe text and support for historical and current schemas.
+
 - Added an Ubuntu edge operational healthcheck that detects stalled anchoring
   even when systemd still reports the worker as running. It checks service
   state, heartbeat/receipt/publication freshness, current queue depth, RLO

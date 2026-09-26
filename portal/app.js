@@ -73,6 +73,7 @@ const translations = {
     checkThree: "3. Браузер читает workflow из Rialo",
     verifyButton: "Проверить независимо",
     downloadProof: "Скачать proof-файл",
+    downloadCsv: "Скачать показания CSV",
     fileEyebrow: "ПРОВЕРКА СКАЧАННОГО ФАЙЛА",
     fileTitle: "Проверить proof-файл",
     fileChoose: "Выберите JSON или перетащите его сюда",
@@ -221,6 +222,7 @@ const translations = {
     checkThree: "3. Browser reads the Rialo workflow",
     verifyButton: "Verify independently",
     downloadProof: "Download proof file",
+    downloadCsv: "Download readings CSV",
     fileEyebrow: "DOWNLOADED FILE CHECK",
     fileTitle: "Verify a proof file",
     fileChoose: "Choose a JSON file or drop it here",
@@ -1195,6 +1197,22 @@ function downloadSelectedProof() {
   URL.revokeObjectURL(url);
 }
 
+function downloadSelectedCsv() {
+  const batch = state.selectedBatch;
+  if (!batch) return;
+  const blob = new Blob([window.RialoCsv.serializeBatch(batch)], {
+    type: "text/csv;charset=utf-8",
+  });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${batch.batch_id}-readings.csv`;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 async function applyLanguage(language, remember = true, updateAddress = true) {
   state.language = language;
   document.documentElement.lang = language;
@@ -1258,6 +1276,7 @@ document.querySelector("#close-detail").addEventListener("click", () => {
   setUrl(state.selectedDeviceId);
 });
 document.querySelector("#verify-btn").addEventListener("click", verifySelected);
+document.querySelector("#download-csv-btn").addEventListener("click", downloadSelectedCsv);
 document.querySelector("#download-proof-btn").addEventListener("click", downloadSelectedProof);
 elements.proofFileInput.addEventListener("change", () => {
   verifyProofFile(elements.proofFileInput.files?.[0]);

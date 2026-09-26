@@ -32,6 +32,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
     <link rel="manifest" href="/site.webmanifest">
     <link rel="stylesheet" href="/styles.css">
+    <script src="/csv.js" defer></script>
     <script src="/verifier.js" defer></script>
     <script src="/app.js" defer></script>
   </head>
@@ -219,6 +220,7 @@
 
         <div class="detail-actions">
           <button id="verify-btn" class="primary-button" type="button" data-i18n="verifyButton">Проверить независимо</button>
+          <button id="download-csv-btn" class="secondary-button" type="button" data-i18n="downloadCsv">Скачать показания CSV</button>
           <button id="download-proof-btn" class="secondary-button" type="button" data-i18n="downloadProof">Скачать proof-файл</button>
         </div>
         <div id="detail-result" class="result" hidden aria-live="polite"></div>

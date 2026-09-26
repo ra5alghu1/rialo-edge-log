@@ -277,6 +277,9 @@ class ArchiveTests(unittest.TestCase):
         thread.start()
         archive_url = f"http://127.0.0.1:{server.server_port}"
         try:
+            with urllib.request.urlopen(archive_url + "/csv.js", timeout=2) as response:
+                self.assertEqual(response.status, 200)
+                self.assertIn(b"RialoCsv", response.read())
             request = urllib.request.Request(
                 archive_url + "/api/ingest",
                 data=json.dumps(self.bundle).encode("utf-8"),
