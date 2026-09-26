@@ -8,7 +8,7 @@ A physical DS18B20 sensor produces temperature readings that are signed directly
 
 The raw telemetry stays off-chain.
 
-[**Open the live demo →**](https://rialo-edge-log.xyz)
+[**Open the live deployment →**](https://rialo-edge-log.xyz)
 
 ![Rialo Edge Log](portal/og-image.png)
 
