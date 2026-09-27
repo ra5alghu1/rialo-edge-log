@@ -74,6 +74,10 @@ const translations = {
     verifyButton: "Проверить независимо",
     downloadProof: "Скачать proof-файл",
     downloadCsv: "Скачать показания CSV",
+    historyPeriod: "История температуры", historyHour: "Час", historyDay: "Сутки", historyWeek: "Неделя",
+    historyEmpty: "За выбранный период показаний нет.",
+    historyMin: "Минимум", historyMax: "Максимум", historyMean: "Среднее по батчам", historyCount: "Батчей",
+    historyNote: "Точки — средние температуры батчей по времени их создания. Среднее — по батчам. Линия прерывается при пропуске sequence, смене сеанса или интервале более 10 минут. Отсутствие данных не означает нулевую температуру.",
     fileEyebrow: "ПРОВЕРКА СКАЧАННОГО ФАЙЛА",
     fileTitle: "Проверить proof-файл",
     fileChoose: "Выберите JSON или перетащите его сюда",
@@ -223,6 +227,10 @@ const translations = {
     verifyButton: "Verify independently",
     downloadProof: "Download proof file",
     downloadCsv: "Download readings CSV",
+    historyPeriod: "Temperature history", historyHour: "Hour", historyDay: "Day", historyWeek: "Week",
+    historyEmpty: "No readings in this period.",
+    historyMin: "Minimum", historyMax: "Maximum", historyMean: "Mean of batch averages", historyCount: "Batches",
+    historyNote: "Points show batch averages at batch creation time. The mean is across batches. Lines break on missing sequences, session changes or intervals over 10 minutes. Missing data does not mean zero temperature.",
     fileEyebrow: "DOWNLOADED FILE CHECK",
     fileTitle: "Verify a proof file",
     fileChoose: "Choose a JSON file or drop it here",
@@ -815,6 +823,42 @@ function updateDeviceMetrics() {
   document.querySelector("#metric-last").textContent = latestBatch?.last_sequence ?? "—";
 }
 
+function renderTemperatureHistory() {
+  const chart = document.querySelector("#history-chart");
+  const summary = window.RialoHistory.summarize(state.batches, Number(document.querySelector("#history-period").value));
+  chart.replaceChildren();
+  const ns = "http://www.w3.org/2000/svg";
+  const add = (tag, attrs, text) => {
+    const el = document.createElementNS(ns, tag);
+    for (const [key, value] of Object.entries(attrs)) el.setAttribute(key, value);
+    if (text !== undefined) el.textContent = text;
+    chart.append(el); return el;
+  };
+  add("title", {id: "history-chart-title"}, t("historyPeriod"));
+  document.querySelector("#history-range").textContent = `${formatDate(new Date(summary.start).toISOString())} — ${formatDate(new Date(summary.end).toISOString())}`;
+  document.querySelector("#history-summary").textContent = summary.count
+    ? `${t("historyMin")}: ${formatTemperature(summary.minimum)} · ${t("historyMax")}: ${formatTemperature(summary.maximum)} · ${t("historyMean")}: ${formatTemperature(summary.average)} · ${t("historyCount")}: ${summary.count}`
+    : t("historyEmpty");
+  if (!summary.count) return;
+  const low = summary.minimum - 0.5, high = summary.maximum + 0.5;
+  const x = p => 65 + 715 * (p.time - summary.start) / (summary.end - summary.start);
+  const y = p => 205 - 180 * (p.batch.temperature.average - low) / (high - low);
+  for (let i = 0; i <= 3; i++) {
+    const value = low + (high - low) * i / 3, height = 205 - 180 * i / 3;
+    add("line", {x1: 65, x2: 780, y1: height, y2: height, stroke: "#334048"});
+    add("text", {x: 4, y: height + 4, fill: "#a0adb5", "font-size": 12}, `${value.toFixed(1)} °C`);
+  }
+  for (const segment of summary.segments) {
+    add("polyline", {points: segment.map(p => `${x(p)},${y(p)}`).join(" "), fill: "none", stroke: "#51d6ae", "stroke-width": 2});
+    for (const point of segment) {
+      const circle = add("circle", {cx: x(point), cy: y(point), r: 3, fill: "#51d6ae"});
+      const title = document.createElementNS(ns, "title");
+      title.textContent = `${formatDate(point.batch.created_at_utc)}: ${formatTemperature(point.batch.temperature.average)}`;
+      circle.append(title);
+    }
+  }
+}
+
 function renderBatches() {
   elements.rows.replaceChildren();
   const pageCount = Math.max(1, Math.ceil(state.batches.length / state.batchPageSize));
@@ -864,6 +908,7 @@ function renderBatches() {
     .replace("{current}", String(state.batchPage))
     .replace("{total}", String(pageCount));
   updateDeviceMetrics();
+  renderTemperatureHistory();
 }
 
 async function selectDevice(deviceId, updateUrl = true, scrollToHistory = true) {
@@ -1242,6 +1287,7 @@ async function applyLanguage(language, remember = true, updateAddress = true) {
   if (updateAddress) setUrl(state.selectedDeviceId, state.selectedBatchId);
 }
 
+document.querySelector("#history-period").addEventListener("change", renderTemperatureHistory);
 document.querySelector("#lang-en").addEventListener("click", () => applyLanguage("en"));
 document.querySelector("#lang-ru").addEventListener("click", () => applyLanguage("ru"));
 document.querySelector("#refresh-btn").addEventListener("click", async (event) => {

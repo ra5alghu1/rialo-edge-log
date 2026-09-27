@@ -262,3 +262,15 @@ Things I may still improve:
 Independent open-source experiment on Rialo Devnet.
 
 Not affiliated with or endorsed by Rialo Labs or Subzero Labs.
+
+## Temperature history
+
+Select a device to see its last hour, day (default), or week of temperature
+history. Points are batch averages positioned at batch creation time, not
+individual measurement timestamps. The summary shows the minimum and maximum
+across included batches and the unweighted mean of their averages.
+
+Lines break on missing sequences, boot-session or simulated/physical changes,
+invalid temperature summaries, and intervals over ten minutes. Empty periods
+show no data rather than a zero temperature. Old batches outside the rolling
+window remain available in the archive table.

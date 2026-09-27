@@ -48,6 +48,7 @@ STATIC_FILES = {
     "/index.html": "index.html",
     "/app.js": "app.js",
     "/csv.js": "csv.js",
+    "/history.js": "history.js",
     "/verifier.js": "verifier.js",
     "/styles.css": "styles.css",
     "/github.svg": "github.svg",

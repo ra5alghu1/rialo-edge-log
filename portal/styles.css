@@ -529,3 +529,8 @@ td.mono { font-family: var(--mono); }
   .proof-stream-track { animation: none; }
   .proof-stream-group[aria-hidden="true"] { display: none; }
 }
+
+.history-chart-card { margin: 20px 0; }
+#history-chart { display: block; width: 100%; height: auto; }
+#history-period { margin-left: 12px; padding: 6px 10px; color: var(--text); background: var(--panel, #11181c); border: 1px solid var(--line-soft); }
+.history-note, #history-range { color: var(--muted); font-size: 12px; line-height: 1.6; }

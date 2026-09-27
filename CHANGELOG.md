@@ -6,6 +6,9 @@ Notable changes to Rialo Edge Log are recorded here as the project evolves.
 
 ### Added
 
+- Device temperature history for the last hour, day, or week, with batch
+  statistics and visible breaks between disconnected observations.
+
 - Download the selected batch’s readings as CSV from the portal, with
   spreadsheet-safe text and support for historical and current schemas.
 
