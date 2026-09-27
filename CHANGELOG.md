@@ -6,6 +6,9 @@ Notable changes to Rialo Edge Log are recorded here as the project evolves.
 
 ### Added
 
+- Kazakh interface with ҚАЗ / РУС / ENG language order, saved preferences,
+  localized dates and accessible labels, and shareable `lang=kk` links.
+
 - Device temperature history for the last hour, day, or week, with batch
   statistics and visible breaks between disconnected observations.
 

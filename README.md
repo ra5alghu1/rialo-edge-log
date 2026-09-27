@@ -274,3 +274,10 @@ Lines break on missing sequences, boot-session or simulated/physical changes,
 invalid temperature summaries, and intervals over ten minutes. Empty periods
 show no data rather than a zero temperature. Old batches outside the rolling
 window remain available in the archive table.
+
+## Languages
+
+The portal supports Kazakh, Russian, and English (ҚАЗ / РУС / ENG). It remembers
+your selection and includes it in shared device links. Open `?lang=kk` for
+Kazakh. Existing Russian and English preferences are preserved; a first visit
+without a language preference still uses Russian.

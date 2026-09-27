@@ -20,6 +20,7 @@
     <meta property="og:image:alt" content="Rialo Edge Log — verifiable telemetry anchored on Rialo Devnet">
     <meta property="og:locale" content="ru_RU">
     <meta property="og:locale:alternate" content="en_US">
+    <meta property="og:locale:alternate" content="kk_KZ">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:creator" content="@ra5alghul">
     <meta name="twitter:title" content="Rialo Edge Log — Verifiable Telemetry">
@@ -44,10 +45,12 @@
         <span class="live-dot"></span>
         <strong>RIALO EDGE LOG</strong>
       </a>
-      <div class="language-switch" role="group" aria-label="Language">
-        <button id="lang-en" type="button">EN</button>
+      <div class="language-switch" role="group" aria-label="Language" data-i18n-aria="languageLabel">
+        <button id="lang-kk" type="button" lang="kk" aria-label="Қазақша">ҚАЗ</button>
         <span aria-hidden="true">|</span>
-        <button id="lang-ru" type="button">RU</button>
+        <button id="lang-ru" type="button" lang="ru" aria-label="Русский">РУС</button>
+        <span aria-hidden="true">|</span>
+        <button id="lang-en" type="button" lang="en" aria-label="English">ENG</button>
       </div>
     </header>
 
@@ -121,7 +124,7 @@
           <button id="copy-link-btn" class="secondary-button" type="button" data-i18n="copyLink">Скопировать ссылку</button>
         </div>
 
-        <div class="metrics" aria-label="Сводка устройства">
+        <div class="metrics" aria-label="Сводка устройства" data-i18n-aria="deviceSummary">
           <article><span data-i18n="metricBatches">Подтверждённых батчей</span><strong id="metric-batches">—</strong></article>
           <article><span data-i18n="metricReadings">Показаний</span><strong id="metric-readings">—</strong></article>
           <article><span data-i18n="metricFirst">Первый sequence</span><strong id="metric-first">—</strong></article>
@@ -153,13 +156,13 @@
                 <th data-i18n="tableSession">Сеанс загрузки</th>
                 <th data-i18n="tableReadings">Показаний</th>
                 <th data-i18n="tableAverage">Средняя °C</th>
-                <th><span class="sr-only">Действие</span></th>
+                <th><span class="sr-only" data-i18n="actionLabel">Действие</span></th>
               </tr>
             </thead>
             <tbody id="batch-rows"></tbody>
           </table>
         </div>
-        <nav id="batch-pagination" class="pagination" aria-label="Навигация по архиву" hidden>
+        <nav id="batch-pagination" class="pagination" aria-label="Навигация по архиву" data-i18n-aria="archiveNavigation" hidden>
           <button id="previous-page" class="secondary-button" type="button" data-i18n="previousPage">← Назад</button>
           <span id="page-label">—</span>
           <button id="next-page" class="secondary-button" type="button" data-i18n="nextPage">Вперёд →</button>
@@ -172,7 +175,7 @@
             <p class="eyebrow" data-i18n="proofEyebrow">ИСТОРИЧЕСКОЕ ДОКАЗАТЕЛЬСТВО</p>
             <h2 id="detail-title" data-i18n="proofTitle">Проверка периода</h2>
           </div>
-          <button id="close-detail" class="icon-button" type="button" aria-label="Закрыть">×</button>
+          <button id="close-detail" class="icon-button" type="button" aria-label="Закрыть" data-i18n-aria="closeLabel">×</button>
         </div>
 
         <div class="detail-grid">
@@ -181,7 +184,7 @@
               <span data-i18n="chartTitle">Температура за период</span>
               <strong id="detail-average">—</strong>
             </div>
-            <svg id="temperature-chart" viewBox="0 0 640 220" role="img" aria-label="График температуры"></svg>
+            <svg id="temperature-chart" viewBox="0 0 640 220" role="img" aria-label="График температуры" data-i18n-aria="chartLabel"></svg>
             <div id="chart-tooltip" class="chart-tooltip" hidden></div>
           </div>
           <dl id="detail-facts" class="facts"></dl>
@@ -207,7 +210,7 @@
               <span data-i18n="archiveDigest">Digest из архива</span>
               <code id="archive-digest">—</code>
             </article>
-            <strong id="digest-match" aria-label="Результат сравнения">?</strong>
+            <strong id="digest-match" aria-label="Результат сравнения" data-i18n-aria="comparisonLabel">?</strong>
             <article>
               <span data-i18n="chainDigest">Digest из Rialo</span>
               <code id="chain-digest" data-i18n="notChecked">Ещё не запрошен</code>
@@ -305,7 +308,7 @@
 
     <footer class="shell footer">
       <span data-i18n="footerNote">Проект проверяет неизменность записей, но не точность самого датчика. Это независимый open-source эксперимент для Rialo Devnet, не связанный с Rialo Labs или Subzero Labs.</span>
-      <div class="social-row" aria-label="Social links">
+      <div class="social-row" aria-label="Social links" data-i18n-aria="socialLabel">
         <a
           class="social-icon social-icon-github"
           href="https://github.com/ra5alghu1/rialo-edge-log"

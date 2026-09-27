@@ -1,5 +1,182 @@
 const translations = {
+  kk: {
+    languageLabel: "Тіл",
+    deviceSummary: "Құрылғы туралы қысқаша мәлімет",
+    archiveNavigation: "Мұрағат беттері",
+    closeLabel: "Жабу",
+    chartLabel: "Температура графигі",
+    comparisonLabel: "Салыстыру нәтижесі",
+    socialLabel: "Әлеуметтік желілер",
+    actionLabel: "Әрекет",
+
+    "pageTitle": "Rialo Edge Log — тексерілетін телеметрия",
+    "heroEyebrow": "ТЕКСЕРІЛЕТІН IOT ТЕЛЕМЕТРИЯСЫ",
+    "heroTitleOne": "ТЕКСЕРІЛЕТІН",
+    "heroTitleTwo": "ТЕЛЕМЕТРИЯ",
+    "heroCopy": "Rialo Edge Log телеметрия деректерінің жарияланғаннан кейін өзгергенін тексереді. ESP8266 әрбір өлшемге цифрлық қолтаңба қояды, жергілікті шлюз өлшеу деректерін топтамаларға біріктіреді, ал олардың SHA-256 хеші Rialo желісіне жазылады. Құрылғыны таңдап, тексеруді бастаңыз — браузер мұрағатты желідегі жазбамен салыстырады.",
+    "proofStreamTitle": "RIALO ТРАНЗАКЦИЯЛАРЫ",
+    "proofStreamHint": "СОҢҒЫ РАСТАЛҒАН ТРАНЗАКЦИЯЛАР",
+    "proofStreamLoading": "ТРАНЗАКЦИЯЛАР ЖҮКТЕЛУДЕ…",
+    "proofStreamEmpty": "ӘЗІРГЕ РАСТАЛҒАН ТРАНЗАКЦИЯЛАР ЖОҚ",
+    "networkEyebrow": "RIALO DEVNET КҮЙІ",
+    "networkTitle": "Дәлелдерді желіге жазу",
+    "networkLoading": "RPC СҰРАУЫ…",
+    "networkOnline": "RIALO RPC ҚОЛЖЕТІМДІ",
+    "networkUnavailable": "RIALO RPC ҚОЛЖЕТІМСІЗ",
+    "networkLow": "RLO БАЛАНСЫ АЗ",
+    "networkCopy": "Деректерді қарау және тексеру тегін. Жаңа топтаманың хеші жазылғанда ғана жоба әмиянынан RLO жұмсалады.",
+    "networkBalance": "Жіберушінің балансы",
+    "networkAnchors": "24 сағаттағы жазбалар",
+    "networkSpend": "Тәуліктік болжамды шығын",
+    "networkReserve": "Болжамды қор",
+    "networkPayer": "Комиссия төлеушінің ашық мекенжайы",
+    "networkEstimate": "Болжам соңғы топтамалар арасындағы уақыт пен соңғы транзакция комиссиясына негізделген.",
+    "networkError": "Балансты қазір алу мүмкін болмады",
+    "days": "күн",
+    "devicesEyebrow": "ТІРКЕЛГЕН ҚҰРЫЛҒЫЛАР",
+    "devicesTitle": "Құрылғылар",
+    "refresh": "Мұрағатты жаңарту",
+    "emptyTitle": "Мұрағатта әзірге құрылғылар жоқ",
+    "emptyCopy": "Алғашқы топтама автоматты түрде жарияланғаннан кейін құрылғы осында пайда болады.",
+    "deviceOnline": "БАЙЛАНЫСТА",
+    "deviceStale": "ДЕРЕКТЕР ЕСКІРГЕН",
+    "deviceOffline": "БАЙЛАНЫС ЖОҚ",
+    "justNow": "жаңа ғана",
+    "tamperAlert": "КОРПУС АШЫЛҒАН",
+    "rebootEvent": "ҚАЙТА ІСКЕ ҚОСЫЛУ",
+    "bootLabel": "Іске қосылу сеансы",
+    "resetReasonLabel": "Қайта іске қосылу себебі",
+    "tamperLabel": "Корпус",
+    "tamperClosed": "жабық",
+    "tamperOpened": "ашылған",
+    "resetPowerOn": "қуат берілді",
+    "resetExternal": "сыртқы сигналмен қайта іске қосылды",
+    "resetSoftware": "бағдарлама арқылы қайта іске қосылды",
+    "resetWatchdog": "watchdog таймері қайта іске қосты",
+    "resetDeepSleep": "ұйқы режимінен шықты",
+    "resetException": "микробағдарлама қатесі",
+    "resetUnknown": "белгісіз",
+    "back": "← Барлық құрылғылар",
+    "historyEyebrow": "ҚҰРЫЛҒЫ ТАРИХЫ",
+    "historyTitle": "Құрылғы тарихы",
+    "copyLink": "Сілтемені көшіру",
+    "copyDone": "Сілтеме көшірілді",
+    "metricBatches": "Расталған топтамалар",
+    "metricReadings": "Өлшемдер",
+    "metricFirst": "Іске қосылу сеанстары",
+    "metricLast": "Ағымдағы реттік нөмір",
+    "tableStatus": "Растау",
+    "tableTime": "Уақыт",
+    "tableRange": "Реттік нөмірлер аралығы",
+    "tableSession": "Іске қосылу сеансы",
+    "tableReadings": "Өлшемдер",
+    "tableAverage": "Орташа, °C",
+    "previousPage": "← Алдыңғы",
+    "nextPage": "Келесі →",
+    "pageLabel": "{current}-бет / {total}",
+    "proofEyebrow": "БҰРЫНҒЫ ЖАЗБАНЫҢ ДӘЛЕЛІ",
+    "proofTitle": "Таңдалған кезеңді тексеру",
+    "chartTitle": "Таңдалған кезеңдегі температура",
+    "checkOne": "1. Браузер ESP8266 қолтаңбаларын тексереді",
+    "checkTwo": "2. Браузер SHA-256 хешін қайта есептейді",
+    "checkThree": "3. Браузер Rialo желісіндегі workflow жазбасын оқиды",
+    "verifyButton": "Тәуелсіз тексеру",
+    "downloadProof": "Дәлел файлын жүктеп алу",
+    "downloadCsv": "Өлшеу деректерін CSV форматында жүктеп алу",
+    "historyPeriod": "Температураның өзгеру тарихы",
+    "historyHour": "Сағат",
+    "historyDay": "Тәулік",
+    "historyWeek": "Апта",
+    "historyEmpty": "Таңдалған кезеңде өлшеу деректері жоқ.",
+    "historyMin": "Ең төменгі",
+    "historyMax": "Ең жоғарғы",
+    "historyMean": "Топтамалар бойынша орташа",
+    "historyCount": "Топтамалар",
+    "historyNote": "Нүктелер топтамалардың орташа температурасын олардың құрылған уақыты бойынша көрсетеді. Орташа мән топтамалар бойынша есептеледі. Реттік нөмірлерде үзіліс болса, сеанс ауысса немесе уақыт аралығы 10 минуттан асса, сызық үзіледі. Деректердің болмауы температураның нөлге тең екенін білдірмейді.",
+    "fileEyebrow": "ЖҮКТЕП АЛЫНҒАН ФАЙЛДЫ ТЕКСЕРУ",
+    "fileTitle": "Дәлел файлын тексеру",
+    "fileChoose": "JSON файлын таңдаңыз немесе осында сүйреп әкеліңіз",
+    "fileHint": "Мұрағаттағы кез келген топтамадан жүктеп алынған дәлел файлы жарайды",
+    "filePrivacy": "Файл тек браузерде тексеріледі, серверге жіберілмейді.",
+    "fileReading": "Файл оқылып, дәлел тексерілуде…",
+    "fileTooLarge": "Файл тым үлкен. Ең үлкен рұқсат етілген көлем — 5 МБ.",
+    "fileVerified": "Дәлел файлы тексерілді: қолтаңбалар, SHA-256 хеші және Rialo жазбасы сәйкес келеді.",
+    "fileFailed": "Дәлел файлы тексеруден өтпеді.",
+    "fileName": "Файл",
+    "failureReason": "Себебі",
+    "chainEyebrow": "ЖЕЛІДЕГІ ДӘЛЕЛ",
+    "chainTitle": "Мұрағатты Rialo Devnet деректерімен салыстыру",
+    "chainConfirmed": "RIALO DEVNET ЖЕЛІСІНДЕ РАСТАЛДЫ",
+    "archiveDigest": "Мұрағаттағы хеш",
+    "chainDigest": "Rialo желісіндегі хеш",
+    "notChecked": "Әзірге сұрау жіберілмеді",
+    "transactionLabel": "Транзакция",
+    "openExplorer": "RialoScan арқылы ашу ↗",
+    "blockPending": "Блок деректері тексеру кезінде оқылады",
+    "rpcNote": "Браузер қолтаңбаларды өзі тексеріп, Rialo деректерін RPC арқылы алады. Мұрағат сервері берген дайын тексеру нәтижесіне сүйенбейді.",
+    "howEyebrow": "ТЕКСЕРУ ҚАЛАЙ ЖҮРЕДІ",
+    "howTitle": "Тексеру мұрағат иесіне тәуелді емес",
+    "stepOneTitle": "Мұрағат деректерді ұсынады",
+    "stepOneCopy": "Тарихты браузерде қарау үшін сервер өлшеу деректері мен уақыт белгілерін сақтайды.",
+    "stepTwoTitle": "Rialo хешті сақтайды",
+    "stepTwoCopy": "Желіде топтаманың хеші сақталады. Мұрағат өзгертілсе, хештер сәйкес келмейді.",
+    "stepThreeTitle": "Портал жазбаларды салыстырады",
+    "stepThreeCopy": "Кемінде бір мән өзгерсе, тексеру деректер тұтастығының бұзылғанын ескертеді.",
+    "limitsEyebrow": "ДӘЛЕЛДІҢ ШЕКТЕУЛЕРІ",
+    "limitsTitle": "Нені дәлелдейді, нені дәлелдемейді",
+    "limitsProves": "ДӘЛЕЛДЕЙДІ",
+    "provesSignatures": "Өлшеу деректеріне тіркелген құрылғының кілтімен қол қойылғанын.",
+    "provesIntegrity": "Жарияланған топтаманың желіге жазылғаннан кейін өзгермегенін.",
+    "provesChain": "Хештің Rialo желісіндегі бұрынғы жазбамен сәйкес келетінін.",
+    "limitsDoesNotProve": "ДӘЛЕЛДЕМЕЙДІ",
+    "doesNotProveCalibration": "Датчиктің дұрыс калибрленіп, орнатылғанын.",
+    "doesNotProveReality": "Өлшенген физикалық мәннің шындыққа сәйкес келетінін.",
+    "doesNotProveCompromise": "Қол қоюға дейін құрылғыға бөгде адамның араласпағанын.",
+    "footerNote": "Жоба жазбалардың өзгермегенін тексереді, бірақ датчиктің дәлдігін тексермейді. Бұл — Rialo Devnet желісіне арналған, бастапқы коды ашық тәуелсіз тәжірибелік жоба. Ол Rialo Labs немесе Subzero Labs ұйымдарымен байланысты емес.",
+    "badResponse": "Мұрағаттан жарамсыз жауап келді",
+    "archiveUnavailable": "Мұрағат қолжетімсіз",
+    "archiveOnline": "МҰРАҒАТ ҚОЛЖЕТІМДІ",
+    "batches": "топтама",
+    "view": "Қарау →",
+    "verified": "РАСТАЛДЫ",
+    "fingerprint": "Ашық кілттің хеші",
+    "factDevice": "Құрылғы",
+    "factReadings": "Өлшемдер",
+    "factSource": "Дерек көзі",
+    "sourceSimulated": "СИМУЛЯТОР",
+    "sourcePhysical": "НАҚТЫ ДАТЧИК",
+    "verifying": "Браузер қолтаңбаларды тексеріп, хешті қайта есептеп, Rialo Devnet деректерін оқып жатыр…",
+    "verifiedHeading": "✓ ДЕРЕКТЕР ӨЗГЕРМЕГЕН",
+    "mismatchHeading": "✕ СӘЙКЕССІЗДІК АНЫҚТАЛДЫ",
+    "incompleteHeading": "! ТЕКСЕРУ АЯҚТАЛМАДЫ",
+    "verifiedMessage": "Тексеру сәтті өтті: құрылғы қолтаңбалары, есептелген хеш және Rialo желісіндегі workflow жазбасы сәйкес келеді.",
+    "verifiedPrunedRegistrationMessage": "Топтама тексеруден өтті. Тіркеу workflow жазбасы сәйкес келеді, бірақ бастапқы тіркеу транзакциясы RPC тарихынан жойылған. Тіркеуші туралы дерек бұрын тексерілген түбіртектен алынды.",
+    "tamperedMessage": "Мұрағат деректері құрылғы қолтаңбаларына немесе Rialo желісіндегі бұрынғы жазбаға сәйкес келмейді.",
+    "invalidReceiptMessage": "Сақталған Rialo түбіртегі толық емес немесе басқа топтамаға тиесілі.",
+    "chainUnavailableMessage": "Жергілікті деректердің тұтастығы расталды, бірақ Rialo желісіндегі бұрынғы деректерді қазір алу мүмкін болмады.",
+    "browserSignatures": "ESP8266 қолтаңбасы браузерде тексерілді",
+    "browserDigest": "SHA-256 хеші жарияланған өлшеу деректерінен қайта есептелді",
+    "browserTransaction": "транзакция Rialo Devnet желісінен табылды",
+    "browserWorkflow": "workflow жазбасындағы хеш сәйкес келеді",
+    "browserRegistration": "құрылғының ашық кілті Rialo желісінде тіркелген",
+    "browserRegistrationPruned": "тіркеу workflow жазбасы сәйкес келеді; бастапқы тіркеу транзакциясы RPC тарихынан жойылған",
+    "archiveRecheck": "мұрағат сервері дәлелді қайта тексерді",
+    "blockLabel": "Блок",
+    "recordedAtLabel": "жазылған уақыты",
+    "feeLabel": "комиссия",
+    "sequence": "реттік нөмір",
+    "temperature": "температура"
+},
   ru: {
+    languageLabel: "Язык",
+    deviceSummary: "Сводка устройства",
+    archiveNavigation: "Навигация по архиву",
+    closeLabel: "Закрыть",
+    chartLabel: "График температуры",
+    comparisonLabel: "Результат сравнения",
+    socialLabel: "Социальные сети",
+    actionLabel: "Действие",
+
     pageTitle: "Rialo Edge Log — проверяемая телеметрия",
     heroEyebrow: "ПРОВЕРЯЕМАЯ IOT-ТЕЛЕМЕТРИЯ",
     heroTitleOne: "ПРОВЕРЯЕМАЯ",
@@ -153,6 +330,15 @@ const translations = {
     temperature: "температура",
   },
   en: {
+    languageLabel: "Language",
+    deviceSummary: "Device summary",
+    archiveNavigation: "Archive navigation",
+    closeLabel: "Close",
+    chartLabel: "Temperature chart",
+    comparisonLabel: "Comparison result",
+    socialLabel: "Social links",
+    actionLabel: "Action",
+
     pageTitle: "Rialo Edge Log — Verifiable Telemetry",
     heroEyebrow: "VERIFIABLE IOT TELEMETRY",
     heroTitleOne: "VERIFIABLE",
@@ -338,9 +524,9 @@ const state = {
   selectedDeviceId: null,
   selectedBatchId: null,
   selectedBatch: null,
-  language: requestedLanguage === "en" || requestedLanguage === "ru"
+  language: ["kk", "ru", "en"].includes(requestedLanguage)
     ? requestedLanguage
-    : savedLanguage === "en" ? "en" : "ru",
+    : ["kk", "ru", "en"].includes(savedLanguage) ? savedLanguage : "ru",
 };
 
 const elements = {
@@ -400,7 +586,7 @@ function formatRlo(value, maximumFractionDigits = 6) {
   if (value == null) return "—";
   const amount = Number(value);
   if (!Number.isFinite(amount)) return "—";
-  return `${amount.toLocaleString(state.language === "en" ? "en-US" : "ru-RU", {
+  return `${amount.toLocaleString(state.language === "kk" ? "kk-KZ" : state.language === "en" ? "en-US" : "ru-RU", {
     minimumFractionDigits: 0,
     maximumFractionDigits,
   })} RLO`;
@@ -412,7 +598,7 @@ function formatRelativeTime(value) {
   const elapsedSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
   if (elapsedSeconds < 60) return t("justNow");
   const formatter = new Intl.RelativeTimeFormat(
-    state.language === "en" ? "en-US" : "ru-RU",
+    state.language === "kk" ? "kk-KZ" : state.language === "en" ? "en-US" : "ru-RU",
     { numeric: "always", style: "short" },
   );
   if (elapsedSeconds < 3600) return formatter.format(-Math.floor(elapsedSeconds / 60), "minute");
@@ -480,7 +666,7 @@ function renderNetworkStatus() {
     : "—";
   const days = network?.estimated_days_remaining;
   elements.networkReserve.textContent = days != null && Number.isFinite(Number(days))
-    ? `${Math.floor(Number(days)).toLocaleString(state.language === "en" ? "en-US" : "ru-RU")} ${t("days")}`
+    ? `${Math.floor(Number(days)).toLocaleString(state.language === "kk" ? "kk-KZ" : state.language === "en" ? "en-US" : "ru-RU")} ${t("days")}`
     : "—";
   elements.networkPayer.textContent = network ? short(network.fee_payer, 12) : "—";
   elements.networkPayer.title = network?.fee_payer || "";
@@ -504,7 +690,7 @@ async function loadNetworkStatus({ showLoading = true, preserveOnError = false }
 function formatDate(value) {
   if (!value) return "—";
   const parsed = new Date(value);
-  const locale = state.language === "en" ? "en-GB" : "ru-RU";
+  const locale = state.language === "kk" ? "kk-KZ" : state.language === "en" ? "en-GB" : "ru-RU";
   return Number.isNaN(parsed.valueOf()) ? value : parsed.toLocaleString(locale);
 }
 
@@ -667,7 +853,8 @@ function setProofFileResult(result) {
       );
     }
   } else if (result.message) {
-    checks.push(`${t("failureReason")}: ${result.message}`);
+    const localized = {TAMPERED: "tamperedMessage", INVALID_RECEIPT: "invalidReceiptMessage", CHAIN_UNAVAILABLE: "chainUnavailableMessage"};
+    checks.push(`${t("failureReason")}: ${localized[result.status] ? t(localized[result.status]) : result.message}`);
   }
   if (checks.length) {
     const list = document.createElement("ul");
@@ -714,7 +901,7 @@ async function verifyProofFile(file) {
 function setUrl(deviceId = null, batchId = null) {
   const url = new URL(window.location.href);
   url.search = "";
-  if (state.language === "en") url.searchParams.set("lang", "en");
+  url.searchParams.set("lang", state.language);
   if (deviceId) url.searchParams.set("device", deviceId);
   if (batchId) url.searchParams.set("batch", batchId);
   window.history.replaceState({}, "", url);
@@ -753,6 +940,7 @@ function deviceCard(device) {
 }
 
 function batchCountLabel(value) {
+  if (state.language === "kk") return `${value} топтама`;
   if (state.language === "en") return `${value} ${value === 1 ? "batch" : "batches"}`;
   const lastTwo = value % 100;
   const last = value % 10;
@@ -1011,7 +1199,7 @@ function formatChainTime(value) {
   const milliseconds = timestamp > 10_000_000_000 ? timestamp : timestamp * 1000;
   const parsed = new Date(milliseconds);
   if (Number.isNaN(parsed.valueOf())) return null;
-  return parsed.toLocaleString(state.language === "en" ? "en-GB" : "ru-RU");
+  return parsed.toLocaleString(state.language === "kk" ? "kk-KZ" : state.language === "en" ? "en-GB" : "ru-RU");
 }
 
 function showChainEvidence(result) {
@@ -1265,7 +1453,10 @@ async function applyLanguage(language, remember = true, updateAddress = true) {
   document.querySelectorAll("[data-i18n]").forEach((element) => {
     element.textContent = t(element.dataset.i18n);
   });
-  for (const code of ["en", "ru"]) {
+  document.querySelectorAll("[data-i18n-aria]").forEach(element => {
+    element.setAttribute("aria-label", t(element.dataset.i18nAria));
+  });
+  for (const code of ["kk", "ru", "en"]) {
     const button = document.querySelector(`#lang-${code}`);
     const active = code === language;
     button.classList.toggle("active", active);
@@ -1288,6 +1479,7 @@ async function applyLanguage(language, remember = true, updateAddress = true) {
 }
 
 document.querySelector("#history-period").addEventListener("change", renderTemperatureHistory);
+document.querySelector("#lang-kk").addEventListener("click", () => applyLanguage("kk"));
 document.querySelector("#lang-en").addEventListener("click", () => applyLanguage("en"));
 document.querySelector("#lang-ru").addEventListener("click", () => applyLanguage("ru"));
 document.querySelector("#refresh-btn").addEventListener("click", async (event) => {
@@ -1351,7 +1543,7 @@ elements.proofDropZone.addEventListener("drop", (event) => {
 document.querySelector("#copy-link-btn").addEventListener("click", async (event) => {
   const url = new URL(window.location.href);
   url.search = "";
-  if (state.language === "en") url.searchParams.set("lang", "en");
+  url.searchParams.set("lang", state.language);
   url.searchParams.set("device", state.selectedDeviceId);
   await navigator.clipboard.writeText(url.toString());
   event.currentTarget.textContent = t("copyDone");
