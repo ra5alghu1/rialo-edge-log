@@ -105,6 +105,28 @@ For monitoring integrations, add `--json`. Historical gaps older than the
 latest successful anchor are deliberately ignored, so a recovery point does not
 leave the deployment permanently unhealthy.
 
+After the manual command reports `HEALTHY`, enable the read-only timer:
+
+```bash
+sudo systemctl enable --now rialo-edge-healthcheck.timer
+systemctl list-timers rialo-edge-healthcheck.timer --no-pager
+```
+
+The timer runs the same complete check two minutes after boot and every five
+minutes afterwards. It records the report and exit status in `journald`; it does
+not restart services, delete queues, or modify telemetry. A `DEGRADED` or
+`FAILED` result makes the latest oneshot service invocation failed while the
+timer remains active and continues scheduling checks. Inspect the latest result
+with:
+
+```bash
+systemctl --no-pager --full status rialo-edge-healthcheck.service
+journalctl -u rialo-edge-healthcheck.service --since today --no-pager
+```
+
+The installer deliberately installs but does not enable the timer before the
+configuration and the first manual result have been reviewed.
+
 The former Windows device remains historical evidence. No telemetry continuity
 is claimed for the period when that host was offline.
 

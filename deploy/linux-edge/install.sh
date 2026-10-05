@@ -39,7 +39,7 @@ else
   echo "Preserved existing ${config_root}/edge.env."
 fi
 
-for source in "${script_dir}"/*.service; do
+for source in "${script_dir}"/*.service "${script_dir}"/*.timer; do
   destination="/etc/systemd/system/$(basename -- "${source}")"
   sed \
     -e "s|@REPO_ROOT@|${repo_root}|g" \
