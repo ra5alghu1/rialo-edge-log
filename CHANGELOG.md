@@ -6,6 +6,10 @@ Notable changes to Rialo Edge Log are recorded here as the project evolves.
 
 ### Added
 
+- Added an opt-in Ubuntu `systemd` timer that runs the read-only operational
+  healthcheck every five minutes, preserves results in `journald`, and never
+  restarts services or changes telemetry automatically.
+
 - Kazakh interface with ҚАЗ / РУС / ENG language order, saved preferences,
   localized dates and accessible labels, and shareable `lang=kk` links.
 

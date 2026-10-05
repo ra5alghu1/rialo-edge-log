@@ -1,0 +1,17 @@
+[Unit]
+Description=Rialo Edge Log operational healthcheck
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=@SERVICE_USER@
+Group=@SERVICE_USER@
+WorkingDirectory=@REPO_ROOT@
+Environment=PYTHONUNBUFFERED=1
+ExecStart=@REPO_ROOT@/.venv/bin/python -m gateway.healthcheck
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+
