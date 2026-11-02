@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from gateway import rialo_anchor
+from gateway.rialo_verify import RialoRpcClient, RialoVerificationError
 
 
 class RestartPendingTests(unittest.TestCase):
@@ -124,6 +125,28 @@ class RestartPendingTests(unittest.TestCase):
                     )
             broadcast.assert_not_called()
             self.assertTrue(marker.exists())
+
+    def test_signature_status_is_diagnostic_not_confirmation(self):
+        client = RialoRpcClient("http://unused")
+        cases = [
+            ({"value": [{"slot": 0, "err": None, "executed": False}]}, "NOT_EXECUTED"),
+            ({"value": [{"slot": 123, "err": None, "executed": True}]}, "EXECUTED_UNVERIFIED"),
+            ({"value": [{"slot": 123, "err": {"code": 1}, "executed": True}]}, "EXECUTION_ERROR"),
+            ({"value": [None]}, "UNKNOWN"),
+        ]
+        for response, expected in cases:
+            with self.subTest(expected=expected), patch.object(client, "call", return_value=response) as rpc:
+                self.assertEqual(client.get_signature_execution_status("signature"), expected)
+                rpc.assert_called_once_with(
+                    "getSignatureStatuses", [{"signatures": ["signature"]}]
+                )
+
+    def test_invalid_signature_status_fails_closed(self):
+        client = RialoRpcClient("http://unused")
+        for response in (None, {}, {"value": []}, {"value": ["bad"]}):
+            with self.subTest(response=response), patch.object(client, "call", return_value=response):
+                with self.assertRaises(RialoVerificationError):
+                    client.get_signature_execution_status("signature")
 
 
 if __name__ == "__main__":
