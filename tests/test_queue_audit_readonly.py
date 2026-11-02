@@ -14,7 +14,7 @@ class QueueAuditTests(unittest.TestCase):
             (root / "receipts").mkdir()
             (root / "publications-vps").mkdir()
             for name in ("current", "old", "pending", "unsubmitted"):
-                (root / "batches" / "edge" / (name + ".json")).write_text("{}")
+                (root / "batches" / "edge" / (name + ".json")).write_text(json.dumps({"batch_id": name, "created_at_utc": "2026-11-01T00:00:00Z"}))
             (root / "receipts" / "current-rialo.json").write_text(json.dumps({"program_id": "new"}))
             (root / "receipts" / "old-rialo.json").write_text(json.dumps({"program_id": "old"}))
             (root / "receipts" / "pending-rialo.pending.json").write_text(json.dumps({
