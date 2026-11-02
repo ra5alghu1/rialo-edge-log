@@ -18,7 +18,7 @@ class QueueAuditTests(unittest.TestCase):
             (root / "receipts" / "current-rialo.json").write_text(json.dumps({"program_id": "new"}))
             (root / "receipts" / "old-rialo.json").write_text(json.dumps({"program_id": "old"}))
             (root / "receipts" / "pending-rialo.pending.json").write_text(json.dumps({
-                "program_id": "new", "status": "SUBMITTED_UNVERIFIED"
+                "batch_id": "pending", "program_id": "new", "status": "SUBMITTED_UNVERIFIED", "transaction_signature": "saved-signature"
             }))
             counts = audit(root, "new")["counts"]
             self.assertEqual(counts["active_receipt_unpublished"], 1)
