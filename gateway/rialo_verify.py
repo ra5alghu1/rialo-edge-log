@@ -80,6 +80,31 @@ class RialoRpcClient:
             raise RialoVerificationError("Rialo transaction was not found")
         return result
 
+    def get_signature_execution_status(self, signature: str) -> str:
+        """Diagnostic only: signature status is never proof of a verified workflow.
+
+        Rialo Devnet reports slot=0/executed=false for signatures which may
+        still be pending. Neither that response nor HTTP 404 permits replay.
+        """
+        result = self.call(
+            "getSignatureStatuses", [{"signatures": [signature]}]
+        )
+        values = result.get("value") if isinstance(result, dict) else None
+        if not isinstance(values, list) or len(values) != 1:
+            raise RialoVerificationError("Rialo signature status response is invalid")
+        status = values[0]
+        if status is None:
+            return "UNKNOWN"
+        if not isinstance(status, dict):
+            raise RialoVerificationError("Rialo signature status entry is invalid")
+        if status.get("err") is not None:
+            return "EXECUTION_ERROR"
+        if status.get("executed") is True:
+            return "EXECUTED_UNVERIFIED"
+        if status.get("executed") is False:
+            return "NOT_EXECUTED"
+        return "UNKNOWN"
+
     def get_account_info(self, address: str) -> dict[str, Any]:
         result = self.call(
             "getAccountInfo", [{"address": address, "encoding": "base64"}]
