@@ -121,7 +121,7 @@ class RestartPendingTests(unittest.TestCase):
                 with self.assertRaises(rialo_anchor.RialoAnchorError):
                     rialo_anchor.submit_batch(
                         batch_path, root / "registry.json", receipt_dir,
-                        "active", "unused", "unused", 1, client=client,
+                        "CA3hK7KpnCnKwQXYPMFpdmupBgF2QqcLmh3WKBxm5qRE", "unused", "unused", 1, client=client,
                     )
             broadcast.assert_not_called()
             self.assertTrue(marker.exists())
