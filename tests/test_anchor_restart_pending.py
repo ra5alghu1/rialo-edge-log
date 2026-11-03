@@ -59,7 +59,7 @@ class RestartPendingTests(unittest.TestCase):
             (receipt_dir / "batch-1-rialo.pending.json").write_text(
                 json.dumps({
                     "batch_id": "batch-1",
-                    "program_id": "active",
+                    "program_id": "CA3hK7KpnCnKwQXYPMFpdmupBgF2QqcLmh3WKBxm5qRE",
                     "status": "SUBMITTED_UNVERIFIED",
                     "transaction_signature": saved_signature,
                 })
@@ -82,7 +82,7 @@ class RestartPendingTests(unittest.TestCase):
                 patch.object(rialo_anchor, "save_receipt", return_value=receipt_dir / "batch-1-rialo.json") as save,
             ):
                 receipt, signature, workflow, output = rialo_anchor.submit_batch(
-                    batch_path, root / "registry.json", receipt_dir, "active",
+                    batch_path, root / "registry.json", receipt_dir, "CA3hK7KpnCnKwQXYPMFpdmupBgF2QqcLmh3WKBxm5qRE",
                     "unused", "unused", 1, client=client,
                 )
             broadcast.assert_not_called()
@@ -103,7 +103,7 @@ class RestartPendingTests(unittest.TestCase):
             marker = receipt_dir / "batch-1-rialo.pending.json"
             marker.write_text(json.dumps({
                 "batch_id": "batch-1",
-                "program_id": "active",
+                "program_id": "CA3hK7KpnCnKwQXYPMFpdmupBgF2QqcLmh3WKBxm5qRE",
                 "status": "SUBMITTED_UNVERIFIED",
                 "transaction_signature": "saved-signature",
             }))
