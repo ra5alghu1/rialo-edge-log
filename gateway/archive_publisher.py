@@ -42,7 +42,8 @@ def publication_path(batch_id: str, directory: Path) -> Path:
 
 
 def list_publishable_batch_ids(
-    data_directory: Path, publication_directory: Path
+    data_directory: Path, publication_directory: Path,
+    program_id: str | None = None,
 ) -> list[str]:
     batch_directory = data_directory / "batches"
     receipt_directory = data_directory / "receipts"
@@ -59,8 +60,21 @@ def list_publishable_batch_ids(
         if not isinstance(batch, dict) or not isinstance(batch.get("batch_id"), str):
             continue
         batch_id = batch["batch_id"]
-        if not (receipt_directory / f"{batch_id}-rialo.json").is_file():
+        receipt_path = receipt_directory / f"{batch_id}-rialo.json"
+        if not receipt_path.is_file():
             continue
+        if program_id is not None:
+            try:
+                receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            if not isinstance(receipt, dict) or (
+                receipt.get("schema_version") != 1
+                or receipt.get("status") != "RIALO_VERIFIED"
+                or receipt.get("batch_id") != batch_id
+                or receipt.get("program_id") != program_id
+            ):
+                continue
         if publication_path(batch_id, publication_directory).is_file():
             continue
         candidates.append((path.stat().st_mtime_ns, batch_id))
@@ -258,13 +272,21 @@ def sync_batches(args: argparse.Namespace) -> int:
 
 def watch_batches(args: argparse.Namespace) -> int:
     publication_directory = args.publication_dir
+    resume_current = getattr(args, "resume_current_program", False)
+    if resume_current and (args.include_existing or not getattr(args, "program_id", None)):
+        raise ArchivePublishError(
+            "--resume-current-program requires --program-id and forbids --include-existing"
+        )
+    program_id = args.program_id if resume_current else None
     existing = set(
-        list_publishable_batch_ids(args.data_dir, publication_directory)
+        list_publishable_batch_ids(args.data_dir, publication_directory, program_id=program_id)
     )
-    known = set() if args.include_existing else existing
+    # Only verified receipts from the current program can be replayed.
+    known = set() if args.include_existing or resume_current else existing
     published_heartbeats: dict[Path, str] = {}
     heartbeat_directory = args.heartbeat_dir or args.data_dir / "heartbeats"
     offline = False
+    failed_retry_after: dict[str, float] = {}
     if known:
         print(f"Watching for new verified batches; {len(known)} existing batch(es) left private.")
     else:
@@ -273,10 +295,10 @@ def watch_batches(args: argparse.Namespace) -> int:
         while True:
             transient_failure: ArchivePublishError | None = None
             candidates = list_publishable_batch_ids(
-                args.data_dir, publication_directory
+                args.data_dir, publication_directory, program_id=program_id
             )
             for batch_id in candidates:
-                if batch_id in known:
+                if batch_id in known or time.monotonic() < failed_retry_after.get(batch_id, 0.0):
                     continue
                 try:
                     receipt, result = publish_batch_id(
@@ -296,12 +318,14 @@ def watch_batches(args: argparse.Namespace) -> int:
                             )
                         offline = True
                         break
-                    print(f"[FAILED] {batch_id}: {exc}", file=sys.stderr)
+                    failed_retry_after[batch_id] = time.monotonic() + 300
+                    print(f"[FAILED] {batch_id}: {exc} (retry in 300s)", file=sys.stderr)
                     continue
                 if offline:
                     print("[ONLINE] archive reachable; resuming queued publications")
                     offline = False
                 known.add(batch_id)
+                failed_retry_after.pop(batch_id, None)
                 print(f"[{result['status']}] {batch_id}")
                 print(f"[RECEIPT] {receipt}")
 
@@ -384,6 +408,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="wait between archive retries while connectivity is unavailable",
     )
     watch.add_argument("--include-existing", action="store_true")
+    watch.add_argument("--program-id", help="trusted active program ID for safe publication replay")
+    watch.add_argument(
+        "--resume-current-program", action="store_true",
+        help="opt-in: retry unpublished receipts only from --program-id across restarts",
+    )
     watch.add_argument("--once", action="store_true")
     add_common_arguments(watch)
     return parser
