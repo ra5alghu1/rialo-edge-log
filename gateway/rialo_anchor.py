@@ -763,7 +763,7 @@ def watch_batches(args: argparse.Namespace) -> int:
             floors = load_or_initialize_boundary(
                 args.receipt_dir / ".anchor-restart-boundary.json",
                 args.program_id,
-                list_batch_files(args.batch_dir),
+                list(known),
             )
         except QueueBoundaryError as exc:
             raise RialoAnchorError(str(exc)) from exc
