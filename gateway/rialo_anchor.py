@@ -20,6 +20,11 @@ from gateway.rialo_args import (
     registration_workflow_slug,
 )
 from gateway.rialo_cli import build_shell_invocation, shell_directory_expression
+from gateway.queue_recovery import (
+    QueueBoundaryError,
+    eligible_for_restart,
+    load_or_initialize_boundary,
+)
 from gateway.rialo_verify import (
     DEFAULT_DEVICE_REGISTRARS,
     DEFAULT_RPC_URL,
@@ -749,6 +754,22 @@ def watch_batches(args: argparse.Namespace) -> int:
             except (OSError, ValueError, TypeError, KeyError):
                 # Invalid files remain excluded; never auto-submit them.
                 continue
+    # Opt-in: retain an immutable snapshot floor across restarts, so new batches
+    # written during downtime are not silently lost. Never replay older history.
+    if getattr(args, "resume_after_restart", False):
+        if args.include_existing:
+            raise RialoAnchorError("--resume-after-restart cannot be combined with --include-existing")
+        try:
+            floors = load_or_initialize_boundary(
+                args.receipt_dir / ".anchor-restart-boundary.json",
+                args.program_id,
+                list_batch_files(args.batch_dir),
+            )
+        except QueueBoundaryError as exc:
+            raise RialoAnchorError(str(exc)) from exc
+        for path in tuple(known):
+            if eligible_for_restart(path, floors):
+                known.discard(path)
     retry_after: dict[Path, float] = {}
     if known:
         print(f"Watching for new batches; {len(known)} existing file(s) left untouched.")
@@ -860,6 +881,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--include-existing",
         action="store_true",
         help="also submit existing unreceipted batches",
+    )
+    watch.add_argument(
+        "--resume-after-restart", action="store_true",
+        help="opt-in: persist a per-device sequence floor and recover batches made during downtime",
     )
     watch.add_argument("--once", action="store_true")
     add_common_arguments(watch)
